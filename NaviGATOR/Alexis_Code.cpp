@@ -116,6 +116,9 @@ public:
         string description;
         float avg_vote;
         int votes;
+        //pair<double, double> ratings[3][5];
+        double avg_votes[3][5];
+        double num_votes[3][5];
 
         Movie() { //default constructor
             title = "";
@@ -125,8 +128,18 @@ public:
             duration = -1;
             production_company = "";
             description = "";
-            avg_vote = -1.0;
-            votes = -1;
+            //avg_vote = -1.0;
+            //votes = -1;
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 5; j++) {
+                    avg_votes[i][j] = -1;
+                }
+            }
+            for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 5; j++) {
+                    num_votes[i][j] = -1;
+                }
+            }
         }
     };
 
@@ -136,6 +149,7 @@ public:
 private:
     unordered_map<string, Movie*> movies;
     int intConv(string& input);
+    float floatConv(string& input);
     unordered_set<string> setConv(string input);
     string testQuotes(string& input);
 };
@@ -144,6 +158,17 @@ int MovieRec::intConv(string& input) { //converts string to integer
     int result;
     try {
         result = stoi(input);
+    }
+    catch(exception &err) {
+        result = -1;
+    }
+    return result;
+}
+
+float MovieRec::floatConv(string& input) {
+    float result;
+    try {
+        result = stof(input);
     }
     catch(exception &err) {
         result = -1;
@@ -182,7 +207,6 @@ MovieRec::MovieRec() {
     vector<string> myString;
     ifstream inFile;
     inFile.open("imdb_movies.tsv");
-    int i = 0;
     if (inFile.is_open()) {
         //remove header
         getline(inFile, line);
@@ -223,23 +247,60 @@ MovieRec::MovieRec() {
             currMovie->actors = setConv(testQuotes(data));
             getline(ss, data, '\t'); //gets the description
             currMovie->description = testQuotes(data);
-            getline(ss, data, '\t'); //gets the average vote
-            float result;
-            try {
-                result = stof(data);
-            }
-            catch (exception &err) {
-                result = -1;
-            }
-            currMovie->avg_vote = result;
-            getline(ss, data, '\t'); //gets the number of votes
-            currMovie->votes = intConv(data);
+            //getline(ss, data, '\t'); //gets the average vote
+            //currMovie->avg_vote = floatConv(data);
+            //getline(ss, data, '\t'); //gets the number of votes
+            //currMovie->votes = intConv(data);
 
             movies[id] = currMovie;
 
         }
     }
-    cout << movies["tt0000574"]->duration << endl;
+    inFile.close();
+    inFile.open("imdb_ratings.tsv");
+
+    if (inFile.is_open()) {
+        getline(inFile, line);
+        getline(inFile, line);
+
+        string id; //holds movie ID, which the map is organized by
+
+        while (getline(inFile, line)) {
+            istringstream ss(line);
+            string id;
+            string data;
+            string trash;
+
+            getline(ss, id, '\t');
+            getline(ss, trash, '\t');
+            getline(ss, data, '\t');
+            movies[id]->num_votes[0][0] = floatConv(data);
+            getline(ss, data, '\t');
+            movies[id]->avg_votes[0][0] = floatConv(data);
+
+            for (int i = 0; i < 11; i++) { //ignore next 11 lines
+                getline(ss, data, '\t');
+            }
+
+            //set either male/female data (not including what has already been set)
+            for (int i = 1; i < 5; i++) {
+                getline(ss, data, '\t');
+                movies[id]->avg_votes[0][i] = floatConv(data);
+                getline(ss, data, '\t');
+                movies[id]->num_votes[0][i] = floatConv(data);
+            }
+
+            //insert male then female data
+            for (int i = 1; i < 3; i++) {
+                for (int j = 0; j < 5; j++) {
+                    getline(ss, data, '\t');
+                    movies[id]->avg_votes[i][j] = floatConv(data);
+                    getline(ss, data, '\t');
+                    movies[id]->num_votes[i][j] = floatConv(data);
+                }
+            }
+        }
+    }
     inFile.close();
 }
 
