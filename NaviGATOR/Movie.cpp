@@ -47,6 +47,7 @@ private:
 
 public:
     int listCapacity = 0;
+
     void makeMatch(Movie *temp, string l, string g, int d, double r)
     {
         if (temp->language == l)
@@ -61,23 +62,36 @@ public:
         temp->match = temp->match / 4;
     }
 
-    void showpq(int reccomendations)
+    void showpq(int recomendations)
     {
         priority_queue<Movie *, vector<Movie *>, CompareMovies> templist = list;
-        while (!templist.empty() && reccomendations > 0)
+        if (templist.empty())
         {
-            cout << '\t' << templist.top()->title << " " << templist.top()->match << endl;
-            templist.pop();
-            reccomendations--;
+            cout << "No recomendations made!" << endl;
+            return;
         }
-        cout << '\n';
+        int underflow = recomendations - templist.size();
+        int n = 0;
+        while (!templist.empty() && recomendations > 0)
+        {
+            cout << n << ". " << templist.top()->title << " " << templist.top()->match << endl;
+            templist.pop();
+            recomendations--;
+            n++;
+        }
+        while (underflow > 0)
+        {
+            cout << n << ". Recommendation not made" << endl;
+            n++;
+        }
     }
 
-    void addMovie(Movie *temp)
+    void addMovie(Movie *temp, string l, string g, int d, double r)
     {
         if (listCapacity < INT_MAX)
 
         {
+            makeMatch(temp, l, g, d, r);
             list.emplace(temp);
             listCapacity++;
         }
@@ -89,26 +103,14 @@ public:
 int main()
 {
     MovieNaviGATOR session;
-    vector<string> actorlist = {"actorone", "actortwo", "actorthree"};
-    Movie *foo = new Movie(1894, 120, 7.7, "idnumber", "movietitle1", "genrecategory", "countryorigin", "languagespoken", actorlist);
-    Movie *fee = new Movie(1994, 150, 5.7, "idnumber", "movietitle2", "genrecategory", "countryorigin", "c", actorlist);
-    session.makeMatch(foo, "languagespoken", "genrecategory", 135, 7.3);
-    session.makeMatch(fee, "languagespoken", "genrecategory", 135, 7.3);
-    
-    session.addMovie(foo);
-    session.addMovie(fee);
-    session.addMovie(foo);
-    session.addMovie(fee);
-    session.addMovie(foo);
-    session.addMovie(fee);
-    session.addMovie(foo);
-    session.addMovie(fee);
-    session.addMovie(foo);
-    session.addMovie(fee);
+    //read movies in from csv 
+    //store movies in both unordered map and unordered set
+    //ask user for preferences
+    //
 
     cout << "Welcome to MovieNAVIGATOR!" << endl;
 
-    int n = -1;
+    int n = 1;
     string language;
     string genre;
     int duration;
