@@ -53,6 +53,7 @@
         "xstddef": "cpp",
         "xtr1common": "cpp",
         "xtree": "cpp",
-        "set": "cpp"
+        "set": "cpp",
+        "unordered_map": "cpp"
     }
 }
