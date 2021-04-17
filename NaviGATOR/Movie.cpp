@@ -155,7 +155,7 @@ int main()
             session.minHeapCreation(number, languages, genres, duration, rating);
             cout << "Would you like more information about any of these movies? (Y/N)" << endl;
             cin >> rawInput;
-            if (rawInput == 'Y')
+            if (rawInput == "Y")
             {
                 cout << "Which of the above movies would you like more information on?" << endl;
                 cin >> rawInput;
