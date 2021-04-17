@@ -3,122 +3,108 @@
 #include <iostream>
 #include <cmath>
 #include <queue>
+#include <set>
 using namespace std;
 
-struct Movie
+set<string, greater<int>> movies;
+
+struct CompareMoviesMax
 {
-    string id;
-    int year;
-    int duration;
-    double rating;
-    double match = 0;
-    string title;
-    string genre;
-    string country;
-    string language;
-    vector<string> actors;
-
-    Movie(int y, int d, double r, string i, string t, string g, string c, string l, vector<string> a)
+    bool operator()(const string m1, const string m2)
     {
-
-        year = y;
-        duration = d;
-        rating = r;
-        id = i;
-        title = t;
-        genre = g;
-        country = c;
-        language = l;
-        actors = a;
+        return movies[m1] < movies[m2];
     }
 };
 
-struct CompareMovies
+struct CompareMoviesMin
 {
-    bool operator()(const Movie *m1, const Movie *m2)
+    bool operator()(const string m1, const string m2)
     {
-        return m1->match < m2->match;
+        return movies[m1] > movies[m2];
     }
 };
 
 class MovieNaviGATOR
 {
 private:
-    priority_queue<Movie *, vector<Movie *>, CompareMovies> list;
+    priority_queue<string, vector<string>, CompareMoviesMax> listMax;
+    priority_queue<string, vector<string>, CompareMoviesMin> listMin;
 
 public:
-    int listCapacity = 0;
 
-    void makeMatch(Movie *temp, string l, string g, int d, double r)
+    void makeMatch(string id, vector<string> l, vector<string> g, int d, double r)
     {
-        if (temp->language == l)
-            temp->match++;
-        if (temp->genre == g)
-            temp->match++;
-        if ((temp->duration < 1.10 * d) && (temp->duration > 0.90 * d))
-            temp->match++;
-        if ((temp->rating < 1.10 * r) && (temp->rating > 0.90 * r))
-            temp->match++;
-
-        temp->match = temp->match / 4;
+        movies[id]->match = rand();
     }
 
-    void showpq(int recomendations)
+    void minHeapCreation(int num, vector<string> l, vector<string> g, int d, double r)
     {
-        priority_queue<Movie *, vector<Movie *>, CompareMovies> templist = list;
-        if (templist.empty())
+        set<string>::iterator it = movies.begin();
+        while (it != movies.end() && num > 0)
         {
-            cout << "No recomendations made!" << endl;
+            if (listMin.size() > num && (*it) < listMin.top())
+            {
+                continue;
+            }
+            makeMatch(*it, l, g, d, r);
+            listMin.emplace(*it);
+            if (listMin.size() > num)
+            {
+                listMin.pop();
+            }
+            it++;
+        }
+        maxHeapCreation();
+    }
+
+    void maxHeapCreation()
+    {
+        while (!listMin.empty())
+        {
+            listMax.emplace(listMin.top());
+            listMin.pop();
+        }
+        showpq();
+    }
+
+    void showpq()
+    {
+        if (listMax.empty())
+        {
+            cout << "No recommendations made!" << endl;
             return;
         }
-        int underflow = recomendations - templist.size();
-        int n = 0;
-        while (!templist.empty() && recomendations > 0)
+        int n = 1;
+        while (!listMax.empty())
         {
-            cout << n << ". " << templist.top()->title << " " << templist.top()->match << endl;
-            templist.pop();
-            recomendations--;
+            cout << n << ". " << movies[listMax.top()]->title << " " << movies[listMax.top()]->match << endl;
+            listMax.pop();
             n++;
         }
-        while (abs(underflow) > 0)
-        {
-            cout << n << ". Recommendation not made" << endl;
-            underflow++;
-            n++;
-        }
-    }
-
-    void addMovie(Movie *temp, string l, string g, int d, double r)
-    {
-        makeMatch(temp, l, g, d, r);
-        list.emplace(temp);
-        listCapacity++;
     }
 };
 
 int main()
 {
     MovieNaviGATOR session;
-    //read movies in from csv
-    //store movies in both unordered map and unordered set
-    //ask user for preferences
-    //
 
     cout << "Welcome to MovieNAVIGATOR!" << endl;
 
     int n = 1;
-    string language;
-    string genre;
     int duration;
-    string actor;
     double rating;
     int number;
+
+    string rawInput;
+    vector<string> actors;
+    vector<string> genres;
+    vector<string> languages;
 
     while (n < 7 && n > 0)
     {
         cout << "Menu:" << endl;
         cout << "1. Select preferred language (e.g. English)" << endl;
-        cout << "2. Select preferred  genre (e.g. Action)" << endl;
+        cout << "2. Select preferred genre (e.g. Action)" << endl;
         cout << "3. Select preferred duration in minutes (e.g. 120)" << endl;
         cout << "4. Select preferred main actor/actress (e.g. George Clooney)" << endl;
         cout << "5. Select preferred ranking (e.g. 7.5)" << endl;
@@ -131,12 +117,18 @@ int main()
         case 1:
             cout << "Languages in database: English, French, Spanish, Japanese, Italian, Hindi, German, Turkish, Russian, Korean, Portuguese, Malayalam, Tamil, Mandarin, Telugu, Cantonese, Persian, Swedish, Polish, Greek, Arabic, Danish, Dutch, Bengali, Finnish, Czech, Hungarian, Norwegian, Romanian, Thai" << endl;
             cout << "Enter preferred language (e.g. English)" << endl;
-            cin >> language;
+            while (getline(cin, rawInput, ','))
+            {
+                languages.push_back(rawInput);
+            }
             break;
         case 2:
             cout << "Genres in database: Action, Adventure, Biography, Comedy, Crime, Drama, Family, Fantasy, History, Horror, Music, Musical, Mystery, Romance, Sci-Fi, Thriller, War, Western" << endl;
             cout << "Enter preferred genre (e.g. Action)" << endl;
-            cin >> genre;
+            while (getline(cin, rawInput, ','))
+            {
+                genres.push_back(rawInput);
+            }
             break;
         case 3:
             cout << "Range of durations (in minutes) in database: 40 - 800" << endl;
@@ -145,7 +137,10 @@ int main()
             break;
         case 4:
             cout << "Enter preferred main actor/actress (e.g. George Clooney)" << endl;
-            cin >> actor;
+            while (getline(cin, rawInput, ','))
+            {
+                actors.push_back(rawInput);
+            }
             break;
         case 5:
             cout << "Range of rankings in database: 1 - 10" << endl;
@@ -156,7 +151,7 @@ int main()
             cout << "Enter number of recommendations" << endl;
             cin >> number;
             cout << "Your top " << number << " movies are:" << endl;
-            session.showpq(number);
+            session.minHeapCreation(number, languages, genres, duration, rating);
             break;
         default:
             break;
