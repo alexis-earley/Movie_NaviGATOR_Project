@@ -42,12 +42,11 @@ struct CompareMovies
 
 class MovieNaviGATOR
 {
-    private:
+private:
     priority_queue<Movie *, vector<Movie *>, CompareMovies> list;
-    int listCapacity = 0;
 
 public:
-    
+    int listCapacity = 0;
     void makeMatch(Movie *temp, string l, string g, int d, double r)
     {
         if (temp->language == l)
@@ -59,7 +58,7 @@ public:
         if ((temp->rating < 1.10 * r) && (temp->rating > 0.90 * r))
             temp->match++;
 
-        temp->match = temp->match / 4;    
+        temp->match = temp->match / 4;
     }
 
     void showpq(int reccomendations)
@@ -74,10 +73,14 @@ public:
         cout << '\n';
     }
 
-    void addMovie(Movie* temp)
+    void addMovie(Movie *temp)
     {
         if (listCapacity < INT_MAX)
+
+        {
             list.emplace(temp);
+            listCapacity++;
+        }
         else
             cout << "List is full!" << endl;
     }
@@ -91,9 +94,71 @@ int main()
     Movie *fee = new Movie(1994, 150, 5.7, "idnumber", "movietitle2", "genrecategory", "countryorigin", "c", actorlist);
     session.makeMatch(foo, "languagespoken", "genrecategory", 135, 7.3);
     session.makeMatch(fee, "languagespoken", "genrecategory", 135, 7.3);
+    
+    session.addMovie(foo);
+    session.addMovie(fee);
+    session.addMovie(foo);
+    session.addMovie(fee);
+    session.addMovie(foo);
+    session.addMovie(fee);
+    session.addMovie(foo);
+    session.addMovie(fee);
     session.addMovie(foo);
     session.addMovie(fee);
 
-    cout << "Your top matches are : " << endl;
-    session.showpq(3);
+    cout << "Welcome to MovieNAVIGATOR!" << endl;
+
+    int n = -1;
+    string language;
+    string genre;
+    int duration;
+    string actor;
+    double rating;
+    int number;
+
+    while (n < 7 && n > 0)
+    {
+        cout << "Menu:" << endl;
+        cout << "1. Select preferred language (e.g. EN)" << endl;
+        cout << "2. Select preferred  genre (e.g. Action)" << endl;
+        cout << "3. Select preferred duration in minutes (e.g. 120)" << endl;
+        cout << "4. Select preferred main actor/actress (e.g. George Clooney)" << endl;
+        cout << "5. Select preferred ranking (e.g. 7.5)" << endl;
+        cout << "6. Recommend movies" << endl;
+        cout << "7. Exit" << endl;
+        cout << "Please enter a menu option (e.g. 3)" << endl;
+        cin >> n;
+        switch(n) 
+        {
+            case 1:
+                cout << "Enter preferred language (e.g. EN)" << endl;
+                cin >> language;
+                break;
+            case 2:
+                cout << "Enter preferred genre (e.g. Action)" << endl;
+                cin >> genre;
+                break;
+            case 3:
+                cout << "Enter preferred duration in minutes (e.g. 120)" << endl;
+                cin >> duration;
+                break;
+            case 4:
+                cout << "Enter preferred main actor/actress (e.g. George Clooney)" << endl;
+                cin >> actor;
+                break;
+            case 5:
+                cout << "Enter preferred ranking (e.g. 7.5)" << endl;
+                cin >> rating;
+                break;
+            case 6:
+                cout << "Enter number of recommendations" << endl;
+                cin >> number;
+                cout << "Your top " << number << " movies are:" << endl;
+                session.showpq(number);
+                break;
+            default:
+                break;
+        }  
+        cout << endl;      
+    }
 }
