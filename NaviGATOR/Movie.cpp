@@ -84,6 +84,7 @@ private:
     void insertMap(unordered_set<string> &newSet, unordered_map<string, int> &mainMap);
 
     void makeMatch(string id, int d, double r);
+    void printSet(unordered_set<string> temp);
     void maxHeapCreation();
     void showpq();
 
@@ -419,16 +420,61 @@ void MovieNaviGATOR::printMovieInfo(string title)
         }
         listMax.pop();
     }
-    cout << "Title: " << current->title << endl;
-    cout << "Original Title: " << current->original_title << endl;
-    cout << "Year: " << current->year << endl;
-    cout << "Date Published: " << current->date_published << endl;
-    //cout << "Genres: " << current->genres << endl;
-    cout << "Duration: " << current->duration << endl;
-    cout << "Production Company: " << current->production_company << endl;
-    cout << "Description: " << current->description << endl;
-    cout << "Average Vote: " << current->avg_vote << endl;
-    cout << "Votes: " << current->votes << endl;
+    if (listMax.empty())
+        cout << "Movie not found." << endl;
+    else
+    {
+        cout << "Title: " << current->title << endl;
+        cout << "Original Title: " << current->original_title << endl;
+        cout << "Year: " << current->year << endl;
+        cout << "Date Published: " << current->date_published << endl;
+        cout << "Genres: ";
+        printSet(current->genres);
+        cout << endl;
+        cout << "Duration: " << current->duration << endl;
+        cout << "Countries: ";
+        printSet(current->countries);
+        cout << endl;
+        cout << "Languages: ";
+        printSet(current->languages);
+        cout << endl;
+        cout << "Directors: ";
+        printSet(current->directors);
+        cout << endl;
+        cout << "Writers: ";
+        printSet(current->writers);
+        cout << endl;
+        cout << "Production Company: " << current->production_company << endl;
+        cout << "Actors: ";
+        // Creating a iterator pointing to start of set
+        vector<string>::iterator it = current->actors.begin();
+        // Iterate till the end of set
+        while (it != current->actors.end())
+        {
+            // Print the element
+            cout << (*it) << ", ";
+            //Increment the iterator
+            it++;
+        }
+        cout << endl;
+        cout << "Description: " << current->description << endl;
+        cout << "Average Vote: " << current->avg_vote << endl;
+        cout << "Votes: " << current->votes << endl;
+    }
+}
+
+void MovieNaviGATOR::printSet(unordered_set<string> temp)
+{
+    // Creating a iterator pointing to start of set
+    unordered_set<string>::iterator it = temp.begin();
+    // Iterate till the end of set
+    while (it != temp.end())
+    {
+        // Print the element
+        cout << (*it) << ", ";
+        //Increment the iterator
+        it++;
+    }
 }
 
 void MovieNaviGATOR::showpq()
@@ -458,6 +504,8 @@ int main()
     int duration;
     double rating;
     int number;
+    int age;
+    int gender;
 
     unordered_set<string> genres;
     vector<string> actors;
@@ -534,7 +582,16 @@ int main()
         }
         else if (n == 5)
         {
-            cout << "Range of rankings in database: 1 - 10" << endl;
+            cout << "Which age group do you fall into?" << endl;
+            cout << "1. 0-18 years" << endl;
+            cout << "2. 19-30 years" << endl;
+            cout << "3. 31-45 years" << endl;
+            cout << "4. 46+ years" << endl;
+            cin >> age;
+            cout << "What gender are you?" << endl;
+            cout << "1. Female" << endl;
+            cout << "2. Male" << endl;
+            cin >> gender;
             cout << "Enter preferred ranking (e.g. 7.5)" << endl;
             cin >> rating;
         }
@@ -584,8 +641,10 @@ int main()
             cin >> data;
             if (data == "Y")
             {
+                cin.ignore();
                 cout << "Which of the above movies would you like more information on?" << endl;
-                cin >> data;
+                getline(cin, data);
+                cout << data << endl;
                 session.printMovieInfo(data);
             }
         }
