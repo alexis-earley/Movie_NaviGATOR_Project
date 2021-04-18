@@ -123,21 +123,21 @@ public:
         Movie() { //default constructor
             title = "";
             original_title = "";
-            year = -1;
+            year = 0;
             date_published = "";
-            duration = -1;
+            duration = 0;
             production_company = "";
             description = "";
             //avg_vote = -1.0;
             //votes = -1;
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 5; j++) {
-                    avg_votes[i][j] = -1;
+                    avg_votes[i][j] = 0;
                 }
             }
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 5; j++) {
-                    num_votes[i][j] = -1;
+                    num_votes[i][j] = 0;
                 }
             }
         }
@@ -160,7 +160,7 @@ int MovieRec::intConv(string& input) { //converts string to integer
         result = stoi(input);
     }
     catch(exception &err) {
-        result = -1;
+        result = 0;
     }
     return result;
 }
@@ -171,7 +171,7 @@ float MovieRec::floatConv(string& input) {
         result = stof(input);
     }
     catch(exception &err) {
-        result = -1;
+        result = 0;
     }
     return result;
 }
