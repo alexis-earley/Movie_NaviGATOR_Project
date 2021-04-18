@@ -84,6 +84,7 @@ public:
 #include <unordered_set>
 #include <set>
 #include <unordered_map>
+#include <map>
 #include <vector>
 #include <sstream>
 #include <string>
@@ -105,7 +106,7 @@ public:
         unordered_set<string> directors;
         unordered_set<string> writers;
         string production_company;
-        unordered_set<string> actors;
+        vector<string> actors;
         string description;
         float avg_vote;
         int votes;
@@ -116,21 +117,21 @@ public:
         Movie() { //default constructor
             title = "";
             original_title = "";
-            year = -1;
+            year = 0;
             date_published = "";
-            duration = -1;
+            duration = 0;
             production_company = "";
             description = "";
             //avg_vote = -1.0;
             //votes = -1;
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 5; j++) {
-                    avg_votes[i][j] = -1;
+                    avg_votes[i][j] = 0;
                 }
             }
             for (int i = 0; i < 3; i++) {
                 for (int j = 0; j < 5; j++) {
-                    num_votes[i][j] = -1;
+                    num_votes[i][j] = 0;
                 }
             }
         }
@@ -144,6 +145,7 @@ private:
     int intConv(string& input);
     float floatConv(string& input);
     unordered_set<string> setConv(string input);
+    vector<string> vectorConv(string input);
     string testQuotes(string& input);
 };
 
@@ -153,7 +155,7 @@ int MovieRec::intConv(string& input) { //converts string to integer
         result = stoi(input);
     }
     catch(exception &err) {
-        result = -1;
+        result = 0;
     }
     return result;
 }
@@ -164,9 +166,15 @@ float MovieRec::floatConv(string& input) {
         result = stof(input);
     }
     catch(exception &err) {
-        result = -1;
+        result = 0;
     }
     return result;
+}
+
+template <typename T>
+T myMax(T x, T y)
+{
+    return (x > y)? x: y;
 }
 
 unordered_set<string> MovieRec::setConv(string input) { //converts set to integer
@@ -183,6 +191,23 @@ unordered_set<string> MovieRec::setConv(string input) { //converts set to intege
         }
     }
     result.insert(currString);
+    return result;
+}
+
+vector<string> MovieRec::vectorConv(string input) { //converts set to integer
+    vector<string> result;
+    string currString = "";
+    for (int i = 0; i < input.size(); i++) {
+        if (input[i] != ',') {
+            currString += input[i];
+        }
+        else {
+            result.push_back(currString);
+            currString = "";
+            i++;
+        }
+    }
+    result.push_back(currString);
     return result;
 }
 
@@ -237,7 +262,7 @@ MovieRec::MovieRec() {
             getline(ss, data, '\t'); //gets the production company
             currMovie->production_company = data;
             getline(ss, data, '\t'); //gets the actors
-            currMovie->actors = setConv(testQuotes(data));
+            currMovie->actors = vectorConv(testQuotes(data));
             getline(ss, data, '\t'); //gets the description
             currMovie->description = testQuotes(data);
             //getline(ss, data, '\t'); //gets the average vote
@@ -296,6 +321,7 @@ MovieRec::MovieRec() {
         }
     }
     inFile.close();
+
 }
 
 MovieRec::~MovieRec() {
