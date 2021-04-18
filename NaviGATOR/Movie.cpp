@@ -316,8 +316,11 @@ int main()
     unordered_set<string> genres;
     unordered_set<string> actors;
     unordered_set<string> languages;
+    unordered_set<string> countries;
+    unordered_set<string> directors;
+    unordered_set<string> writers;  
 
-    while (n < 7 && n > 0)
+    while (n < 10 && n > 0)
     {
         string data;
         cout << "Menu:" << endl;
@@ -326,8 +329,11 @@ int main()
         cout << "3. Select preferred duration in minutes (e.g. 120)" << endl;
         cout << "4. Select preferred actors/actresses (e.g. George Clooney)" << endl;
         cout << "5. Select preferred ranking (e.g. 7.5)" << endl;
-        cout << "6. Recommend movies" << endl;
-        cout << "7. Exit" << endl;
+        cout << "6. Select preferred countries (e.g. India)" << endl;
+        cout << "7. Select preferred directors (e.g. Steven Spielberg)" << endl;
+        cout << "8. Select preferred writers (e.g. Quentin Tarantino)" << endl;
+        cout << "9. Recommend movies" << endl;
+        cout << "10. Exit" << endl;
         cout << "Please enter a menu option (e.g. 3)" << endl;
         cin >> n;
         if (n == 1)
@@ -384,6 +390,42 @@ int main()
         }
         else if (n == 6)
         {
+            cin.ignore();
+            cout << "Enter preferred countries (e.g. India)" << endl;
+            getline(cin, data);
+            istringstream ss(data);
+            string country;
+            while (getline(ss, country, ','))
+                if(country[0] == ' ')
+                        country.erase(0,1);
+                    countries.insert(country);
+        }
+        else if (n == 7)
+        {
+            cin.ignore();
+            cout << "Enter preferred directors (e.g. Steven Spielberg)" << endl;
+            getline(cin, data);
+            istringstream ss(data);
+            string director;
+            while (getline(ss, director, ','))
+                if(director[0] == ' ')
+                        director.erase(0,1);
+                    countries.insert(director);
+        }
+        else if (n == 8)
+        {
+            cin.ignore();
+            cout << "Enter preferred writers (e.g. Quentin Tarantino)" << endl;
+            getline(cin, data);
+            istringstream ss(data);
+            string writer;
+            while (getline(ss, writer, ','))
+                if(writer[0] == ' ')
+                        writer.erase(0,1);
+                    writers.insert(writer);
+        }
+        else if (n == 9)
+        {
             cout << "Enter number of recommendations" << endl;
             cin >> number;
             cout << "Your top " << number << " movies are:" << endl;
@@ -397,7 +439,6 @@ int main()
                 session.printMovieInfo();
             }
         }
-        //cout << data << endl;
         cout << endl;
     }
 }
