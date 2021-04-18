@@ -25,37 +25,40 @@ public:
     unordered_set<string> directors;
     unordered_set<string> writers;
     string production_company;
-    unordered_set<string> actors;
+    vector<string> actors;
     string description;
     float avg_vote;
     int votes;
+    //pair<double, double> ratings[3][5];
     float match;
-    double avg_votes[3][5];
-    double num_votes[3][5];
+    double avg_votes[3][5] = {0};
+    double num_votes[3][5] = {0};
 
     Movie()
     { //default constructor
         title = "";
         original_title = "";
-        year = -1;
+        year = 0;
         date_published = "";
-        duration = -1;
+        duration = 0;
         production_company = "";
         description = "";
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 5; j++)
-            {
-                avg_votes[i][j] = -1;
-            }
-        }
-        for (int i = 0; i < 3; i++)
-        {
-            for (int j = 0; j < 5; j++)
-            {
-                num_votes[i][j] = -1;
-            }
-        }
+        //avg_vote = -1.0;
+        //votes = -1;
+        // for (int i = 0; i < 3; i++)
+        // {
+        //     for (int j = 0; j < 5; j++)
+        //     {
+        //         avg_votes[i][j] = 0;
+        //     }
+        // }
+        // for (int i = 0; i < 3; i++)
+        // {
+        //     for (int j = 0; j < 5; j++)
+        //     {
+        //         num_votes[i][j] = 0;
+        //     }
+        // }
     }
 };
 unordered_map<string, Movie *> movies;
@@ -80,65 +83,60 @@ class MovieNaviGATOR
 private:
     priority_queue<string, vector<string>, CompareMoviesMax> listMax;
     priority_queue<string, vector<string>, CompareMoviesMin> listMin;
+
     int intConv(string &input);
     float floatConv(string &input);
-
     string testQuotes(string &input);
+    unordered_set<string> setConv(string input);
+    vector<string> vectorConv(string input);
 
-    void makeMatch(string id, unordered_set<string> l, unordered_set<string> g, int d, double r);
-
+    void makeMatch(string id, int d, double r);
     void maxHeapCreation();
-
     void showpq();
-
 public:
     MovieNaviGATOR();
     ~MovieNaviGATOR();
-    void minHeapCreation(int num, unordered_set<string> l, unordered_set<string> g, int d, double r);
-    void printMovieInfo();
-    unordered_set<string> setConv(string input);
+
+    void minHeapCreation(int num, int d, double r);
+    void printMovieInfo(string title);
 };
 
-int MovieNaviGATOR::intConv(string &input)
-{ //converts string to integer
+int MovieNaviGATOR::intConv(string& input) { //converts string to integer
     int result;
-    try
-    {
+    try {
         result = stoi(input);
     }
-    catch (exception &err)
-    {
-        result = -1;
+    catch(exception &err) {
+        result = 0;
     }
     return result;
 }
 
-float MovieNaviGATOR::floatConv(string &input)
-{
+float MovieNaviGATOR::floatConv(string& input) {
     float result;
-    try
-    {
+    try {
         result = stof(input);
     }
-    catch (exception &err)
-    {
-        result = -1;
+    catch(exception &err) {
+        result = 0;
     }
     return result;
 }
 
-unordered_set<string> MovieNaviGATOR::setConv(string input)
-{ //converts string to set
+template <typename T>
+T myMax(T x, T y)
+{
+    return (x > y)? x: y;
+}
+
+unordered_set<string> MovieNaviGATOR::setConv(string input) { //converts set to integer
     unordered_set<string> result;
     string currString = "";
-    for (int i = 0; i < input.size(); i++)
-    {
-        if (input[i] != ',')
-        {
+    for (int i = 0; i < input.size(); i++) {
+        if (input[i] != ',') {
             currString += input[i];
         }
-        else
-        {
+       else {
             result.insert(currString);
             currString = "";
             i++;
@@ -148,12 +146,27 @@ unordered_set<string> MovieNaviGATOR::setConv(string input)
     return result;
 }
 
-string MovieNaviGATOR::testQuotes(string &input)
-{ //removes quotes, if present
+vector<string> MovieNaviGATOR::vectorConv(string input) { //converts set to integer
+    vector<string> result;
+    string currString = "";
+    for (int i = 0; i < input.size(); i++) {
+        if (input[i] != ',') {
+            currString += input[i];
+        }
+        else {
+            result.push_back(currString);
+            currString = "";
+            i++;
+        }
+    }
+    result.push_back(currString);
+    return result;
+}
+
+string MovieNaviGATOR::testQuotes(string& input) { //removes quotes, if present
     int lastChar = input.size() - 1;
     string result;
-    if ((input[0] == '\"') && (input[lastChar] == '\"'))
-    {
+    if ((input[0] == '\"') && (input[lastChar] == '\"')) {
         return input.substr(1, lastChar - 1);
     }
     return input;
@@ -161,22 +174,20 @@ string MovieNaviGATOR::testQuotes(string &input)
 
 MovieNaviGATOR::MovieNaviGATOR()
 {
+    //cout << "constructor" << endl;
     string line;
     vector<string> myString;
     ifstream inFile;
-    string filename = "C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_movies.tsv";
-    inFile.open(filename);
-    int i = 0;
-    if (inFile.is_open())
-    {
+    inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_movies.tsv");
+    if (inFile.is_open()) {
         //remove header
+        //cout << "movies opened" << endl;
         getline(inFile, line);
         getline(inFile, line);
 
         string id; //holds movie ID, which the map is organized by
 
-        while (getline(inFile, line))
-        {
+        while (getline(inFile, line)) {
             Movie *currMovie = new Movie();
             istringstream ss(line);
 
@@ -206,24 +217,63 @@ MovieNaviGATOR::MovieNaviGATOR()
             getline(ss, data, '\t'); //gets the production company
             currMovie->production_company = data;
             getline(ss, data, '\t'); //gets the actors
-            currMovie->actors = setConv(testQuotes(data));
+            currMovie->actors = vectorConv(testQuotes(data));
             getline(ss, data, '\t'); //gets the description
             currMovie->description = testQuotes(data);
-            getline(ss, data, '\t'); //gets the average vote
-            float result;
-            try
-            {
-                result = stof(data);
-            }
-            catch (exception &err)
-            {
-                result = -1;
-            }
-            currMovie->avg_vote = result;
-            getline(ss, data, '\t'); //gets the number of votes
-            currMovie->votes = intConv(data);
+            //getline(ss, data, '\t'); //gets the average vote
+            //currMovie->avg_vote = floatConv(data);
+            //getline(ss, data, '\t'); //gets the number of votes
+            //currMovie->votes = intConv(data);
 
             movies[id] = currMovie;
+
+        }
+    }
+
+    inFile.close();
+    inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv");
+
+    if (inFile.is_open()) {
+        cout << "ratings open" << endl;
+        getline(inFile, line);
+        getline(inFile, line);
+
+        string id; //holds movie ID, which the map is organized by
+
+        while (getline(inFile, line)) {
+            istringstream ss(line);
+            string id;
+            string data;
+            string trash;
+
+            getline(ss, id, '\t');
+            getline(ss, trash, '\t');
+            getline(ss, data, '\t');
+            movies[id]->num_votes[0][0] = floatConv(data);
+            getline(ss, data, '\t');
+            movies[id]->avg_votes[0][0] = floatConv(data);
+
+            for (int i = 0; i < 11; i++) { //ignore next 11 lines
+                getline(ss, data, '\t');
+            }
+
+            //set either male/female data (not including what has already been set)
+            for (int i = 1; i < 5; i++) {
+                getline(ss, data, '\t');
+                movies[id]->avg_votes[0][i] = floatConv(data);
+                getline(ss, data, '\t');
+                movies[id]->num_votes[0][i] = floatConv(data);
+            }
+
+            //insert male then female data
+            for (int i = 1; i < 3; i++) {
+                for (int j = 0; j < 5; j++) {
+                    getline(ss, data, '\t');
+                    movies[id]->avg_votes[i][j] = floatConv(data);
+                    getline(ss, data, '\t');
+                    movies[id]->num_votes[i][j] = floatConv(data);
+                }
+            }
         }
     }
     inFile.close();
@@ -232,30 +282,31 @@ MovieNaviGATOR::MovieNaviGATOR()
 MovieNaviGATOR::~MovieNaviGATOR()
 {
     auto it = movies.begin();
-    while (it != movies.end())
-    {
+    while (it != movies.end()) {
         delete it->second;
         it++;
     }
     movies.clear();
 }
 
-void MovieNaviGATOR::makeMatch(string id, unordered_set<string> l, unordered_set<string> g, int d, double r)
+void MovieNaviGATOR::makeMatch(string id, int d, double r)
 {
-    Movie *temp = movies[id];
-    if (temp->duration == d)
-        temp->match++;
-    if (temp->avg_vote == r)
-        temp->match++;
+    //cout << "match" << endl;
+    movies[id]->match = ((double) rand() / (RAND_MAX));
+    //cout << movies[id]->match << endl;
 }
 
-void MovieNaviGATOR::minHeapCreation(int num, unordered_set<string> l, unordered_set<string> g, int d, double r)
+void MovieNaviGATOR::minHeapCreation(int num, int d, double r)
 {
+    //cout << "min heap" << endl;
+    //cout << movies.size() << endl;
     for (auto it = movies.begin(); it != movies.end(); ++it)
     {
+        //cout << movies.size() << endl;
         if (num > 0)
         {
-            makeMatch(it->first, l, g, d, r);
+            //cout << it->first << endl;
+            makeMatch(it->first, d, r);
             if (listMin.size() > num && (it->second)->match < movies[listMin.top()]->match)
             {
                 continue;
@@ -274,30 +325,54 @@ void MovieNaviGATOR::minHeapCreation(int num, unordered_set<string> l, unordered
 
 void MovieNaviGATOR::maxHeapCreation()
 {
+    //cout << listMin.size() << endl;
     while (!listMin.empty())
     {
         listMax.emplace(listMin.top());
+        //cout << movies[listMax.top()]->title << endl;
         listMin.pop();
     }
+    //cout << listMax.size() << endl;
     showpq();
 }
 
-void MovieNaviGATOR::printMovieInfo()
+void MovieNaviGATOR::printMovieInfo(string title)
 {
+    Movie* current;
+    while (!listMax.empty()) 
+    {
+        if (title == movies[listMax.top()]->title)
+            {
+                current = movies[listMax.top()];
+                break;
+            }
+        listMax.pop();
+    }
+    cout << "Title: " << current->title << endl;
+    cout << "Original Title: " << current->original_title << endl;
+    cout << "Year: " << current->year << endl;
+    cout << "Date Published: " << current->date_published << endl;
+    //cout << "Genres: " << current->genres << endl;
+    cout << "Duration: "<< current->duration << endl;
+    cout << "Production Company: " << current->production_company << endl;
+    cout << "Description: " << current->description << endl;
+    cout << "Average Vote: " << current->avg_vote << endl;
+    cout << "Votes: " << current->votes << endl;
 }
 
 void MovieNaviGATOR::showpq()
 {
-    if (listMax.empty())
+    priority_queue<string, vector<string>, CompareMoviesMax> temp = listMax;
+    if (temp.empty())
     {
         cout << "No recommendations made!" << endl;
         return;
     }
     int n = 1;
-    while (!listMax.empty())
+    while (!temp.empty())
     {
-        cout << "Movie #" << n << ": " << movies[listMax.top()]->title << " " << movies[listMax.top()]->match << endl;
-        listMax.pop();
+        cout << "Movie #" << n << ": " << movies[temp.top()]->title << " " << movies[temp.top()]->match << endl;
+        temp.pop();
         n++;
     }
 }
@@ -314,11 +389,11 @@ int main()
     int number;
 
     unordered_set<string> genres;
-    unordered_set<string> actors;
+    vector<string> actors;
     unordered_set<string> languages;
     unordered_set<string> countries;
     unordered_set<string> directors;
-    unordered_set<string> writers;  
+    unordered_set<string> writers;
 
     while (n < 10 && n > 0)
     {
@@ -344,11 +419,11 @@ int main()
             istringstream ss(data);
             string language;
             while (getline(ss, language, ','))
-                {
-                    if(language[0] == ' ')
-                        language.erase(0,1);
-                    languages.insert(language);
-                }
+            {
+                if (language[0] == ' ')
+                    language.erase(0, 1);
+                languages.insert(language);
+            }
         }
         else if (n == 2)
         {
@@ -358,11 +433,11 @@ int main()
             istringstream ss(data);
             string genre;
             while (getline(ss, genre, ','))
-                {
-                    if(genre[0] == ' ')
-                        genre.erase(0,1);
-                    genres.insert(genre);
-                }
+            {
+                if (genre[0] == ' ')
+                    genre.erase(0, 1);
+                genres.insert(genre);
+            }
         }
         else if (n == 3)
         {
@@ -378,9 +453,9 @@ int main()
             istringstream ss(data);
             string actor;
             while (getline(ss, actor, ','))
-                if(actor[0] == ' ')
-                        actor.erase(0,1);
-                    actors.insert(actor);
+                if (actor[0] == ' ')
+                    actor.erase(0, 1);
+            actors.push_back(actor);
         }
         else if (n == 5)
         {
@@ -396,9 +471,9 @@ int main()
             istringstream ss(data);
             string country;
             while (getline(ss, country, ','))
-                if(country[0] == ' ')
-                        country.erase(0,1);
-                    countries.insert(country);
+                if (country[0] == ' ')
+                    country.erase(0, 1);
+            countries.insert(country);
         }
         else if (n == 7)
         {
@@ -408,9 +483,9 @@ int main()
             istringstream ss(data);
             string director;
             while (getline(ss, director, ','))
-                if(director[0] == ' ')
-                        director.erase(0,1);
-                    countries.insert(director);
+                if (director[0] == ' ')
+                    director.erase(0, 1);
+            countries.insert(director);
         }
         else if (n == 8)
         {
@@ -420,23 +495,23 @@ int main()
             istringstream ss(data);
             string writer;
             while (getline(ss, writer, ','))
-                if(writer[0] == ' ')
-                        writer.erase(0,1);
-                    writers.insert(writer);
+                if (writer[0] == ' ')
+                    writer.erase(0, 1);
+            writers.insert(writer);
         }
         else if (n == 9)
         {
             cout << "Enter number of recommendations" << endl;
             cin >> number;
             cout << "Your top " << number << " movies are:" << endl;
-            session.minHeapCreation(number, languages, genres, duration, rating);
+            session.minHeapCreation(number, duration, rating);
             cout << "Would you like more information about any of these movies? (Y/N)" << endl;
             cin >> data;
             if (data == "Y")
             {
                 cout << "Which of the above movies would you like more information on?" << endl;
                 cin >> data;
-                session.printMovieInfo();
+                session.printMovieInfo(data);
             }
         }
         cout << endl;
