@@ -1,84 +1,3 @@
-/* #include <iostream>
-#include <unordered_map>
-#include <map>
-#include<set>
-using namespace std;
-class Node { //holds the data for each node in the tree
-public:
-    long id;
-    string name;
-    Node* left;
-    Node* right;
-    Node() { //default constructor
-        id = -1;
-        name = "";
-        left = nullptr;
-        right = nullptr;
-    }
-    Node(long id, string name) { //constructor with name and ID
-        this->id = id;
-        this->name = name;
-        left = nullptr;
-        right = nullptr;
-    }
-    Node(long id, string name, Node* left, Node* right) { //constructor with name, ID, left and right
-        this->id = id;
-        this->name = name;
-        this->left = left;
-        this->right = right;
-    }
-};
-struct comp
-{
-    template<typename T>
-    bool operator()(const T &l, const T &r) const
-    {
-        return l->id < r->id;
-    }
-};
-int main() {
-    Node node1 = Node(1, "node1");
-    Node node2 = Node(2, "node2");
-    Node node0 = Node(0, "node0");
-    set<Node*, comp> st;
-    st.insert(&node2);
-    st.insert(&node1);
-    for (int i = 0; i < 2; i++) {
-        auto it = st.begin();
-        while (it != st.end()) {
-            // Print the element
-            std::cout << (*it)->name << endl;
-            //Increment the iterator
-            it++;
-        }
-        st.insert(&node0);
-        cout << endl;
-    }
-    //map<Node, Node*> umap;
-    std::cout << "Hello, World!" << std::endl;
-    return 0;
-}
-void printSet(unordered_set<string>& mySet) {
-    auto it = mySet.begin();
-    while (it != mySet.end()) {
-        cout << *it << " ";
-        it++;
-    }
-    cout << endl;
-}
-class Actor {
-public:
-    int importance;
-    string name;
-    string character;
-    Actor() { //default constructor
-        importance = -1;
-        name = "";
-        character = "";
-    }
-};
- */
-
 #include <iostream>
 #include <fstream>
 #include <unordered_set>
@@ -88,6 +7,7 @@ public:
 #include <vector>
 #include <sstream>
 #include <string>
+#include <queue>
 
 using namespace std;
 
@@ -110,9 +30,8 @@ public:
         string description;
         float avg_vote;
         int votes;
-        //pair<double, double> ratings[3][5];
-        double avg_votes[3][5];
-        double num_votes[3][5];
+        double avg_votes[3][5]; //holds ratings across different age groups and genders
+        double num_votes[3][5]; //same as above, but with total numbers of votes instead of average numbers of votes
 
         Movie() { //default constructor
             title = "";
@@ -122,14 +41,12 @@ public:
             duration = 0;
             production_company = "";
             description = "";
-            //avg_vote = -1.0;
-            //votes = -1;
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 3; i++) { //fill 2D array with 0's
                 for (int j = 0; j < 5; j++) {
                     avg_votes[i][j] = 0;
                 }
             }
-            for (int i = 0; i < 3; i++) {
+            for (int i = 0; i < 3; i++) { //again fill 2D array with 0's
                 for (int j = 0; j < 5; j++) {
                     num_votes[i][j] = 0;
                 }
@@ -139,17 +56,24 @@ public:
 
     MovieRec();
     ~MovieRec();
+    void displayGenres();
+    void displayLangs();
 
 private:
-    unordered_map<string, Movie*> movies;
+    unordered_map<string, Movie*> movies; //holds each movie, with the key being the movie ID
+    unordered_map<string, int> genreMap; //holds frequencies of genres
+    unordered_map<string, int> languageMap; //holds frequencies of languages
+
     int intConv(string& input);
     float floatConv(string& input);
     unordered_set<string> setConv(string input);
     vector<string> vectorConv(string input);
     string testQuotes(string& input);
+    void displayMap(unordered_map<string, int> myMap, int length);
+    void insertMap(unordered_set<string> &newSet, unordered_map<string, int> &mainMap);
 };
 
-int MovieRec::intConv(string& input) { //converts string to integer
+int MovieRec::intConv(string& input) { //constructor helper function; converts string to integer, if possible
     int result;
     try {
         result = stoi(input);
@@ -160,7 +84,7 @@ int MovieRec::intConv(string& input) { //converts string to integer
     return result;
 }
 
-float MovieRec::floatConv(string& input) {
+float MovieRec::floatConv(string& input) { //constructor helper function; converts string to float, if possible
     float result;
     try {
         result = stof(input);
@@ -171,13 +95,7 @@ float MovieRec::floatConv(string& input) {
     return result;
 }
 
-template <typename T>
-T myMax(T x, T y)
-{
-    return (x > y)? x: y;
-}
-
-unordered_set<string> MovieRec::setConv(string input) { //converts set to integer
+unordered_set<string> MovieRec::setConv(string input) { //constructor helper function; breaks apart string by commas and places into an unordered set
     unordered_set<string> result;
     string currString = "";
     for (int i = 0; i < input.size(); i++) {
@@ -194,7 +112,7 @@ unordered_set<string> MovieRec::setConv(string input) { //converts set to intege
     return result;
 }
 
-vector<string> MovieRec::vectorConv(string input) { //converts set to integer
+vector<string> MovieRec::vectorConv(string input) { //constructor helper function; breaks apart string by commas and places into a vector
     vector<string> result;
     string currString = "";
     for (int i = 0; i < input.size(); i++) {
@@ -211,7 +129,7 @@ vector<string> MovieRec::vectorConv(string input) { //converts set to integer
     return result;
 }
 
-string MovieRec::testQuotes(string& input) { //removes quotes, if present
+string MovieRec::testQuotes(string& input) { //constructor helper function; removes quotes from a string, if present
     int lastChar = input.size() - 1;
     string result;
     if ((input[0] == '\"') && (input[lastChar] == '\"')) {
@@ -220,19 +138,33 @@ string MovieRec::testQuotes(string& input) { //removes quotes, if present
     return input;
 }
 
-MovieRec::MovieRec() {
+void MovieRec::insertMap(unordered_set<string> &newSet, unordered_map<string, int> &mainMap) { //constructor helper function; puts contents of set into map frequency table
+    auto it = newSet.begin();
+    while (it != newSet.end()) {
+        if (mainMap.find(*it) != mainMap.end()) {
+            mainMap[*it] = mainMap[*it] + 1;
+        }
+        else {
+            mainMap[*it] = 1;
+        }
+        it++;
+    }
+}
+
+MovieRec::MovieRec() { //constructor; reads through files and sets up movie unordered_map
     string line;
     vector<string> myString;
     ifstream inFile;
-    inFile.open("imdb_movies.tsv");
+    inFile.open("imdb_movies.tsv"); //first file; contains main movie data, but no detailed rating data, about 86k lines
     if (inFile.is_open()) {
-        //remove header
+
+        //remove heading
         getline(inFile, line);
         getline(inFile, line);
 
         string id; //holds movie ID, which the map is organized by
 
-        while (getline(inFile, line)) {
+        while (getline(inFile, line)) { //for each row in the data file
             Movie *currMovie = new Movie();
             istringstream ss(line);
 
@@ -248,13 +180,19 @@ MovieRec::MovieRec() {
             getline(ss, data, '\t'); //gets the date published
             currMovie->date_published = data;
             getline(ss, data, '\t'); //gets the genres
-            currMovie->genres = setConv(data);
+            unordered_set<string> genres = setConv(testQuotes(data));
+            currMovie->genres = genres;
+            insertMap(genres, genreMap);
+
             getline(ss, data, '\t'); //gets the duration
             currMovie->duration = intConv(data);
             getline(ss, data, '\t'); //gets the countries
             currMovie->countries = setConv(testQuotes(data));
             getline(ss, data, '\t'); //gets the languages
-            currMovie->languages = setConv(testQuotes(data));
+            unordered_set<string> languages = setConv(testQuotes(data));
+            currMovie->languages = languages;
+            insertMap(languages, languageMap);
+
             getline(ss, data, '\t'); //gets the directors
             currMovie->directors = setConv(testQuotes(data));
             getline(ss, data, '\t'); //gets the writers
@@ -265,43 +203,38 @@ MovieRec::MovieRec() {
             currMovie->actors = vectorConv(testQuotes(data));
             getline(ss, data, '\t'); //gets the description
             currMovie->description = testQuotes(data);
-            //getline(ss, data, '\t'); //gets the average vote
-            //currMovie->avg_vote = floatConv(data);
-            //getline(ss, data, '\t'); //gets the number of votes
-            //currMovie->votes = intConv(data);
 
             movies[id] = currMovie;
 
         }
     }
-
     inFile.close();
-    inFile.open("imdb_ratings.tsv");
+    inFile.open("imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
 
     if (inFile.is_open()) {
+        //remove heading
         getline(inFile, line);
         getline(inFile, line);
 
         string id; //holds movie ID, which the map is organized by
+        string data; //holds various pieces of important data
+        string trash; //holds lines that are ignored
 
         while (getline(inFile, line)) {
             istringstream ss(line);
-            string id;
-            string data;
-            string trash;
 
-            getline(ss, id, '\t');
-            getline(ss, trash, '\t');
-            getline(ss, data, '\t');
+            getline(ss, id, '\t'); //collect the ID for the current movie
+            getline(ss, trash, '\t'); //trash the following line (irrelevant info)
+            getline(ss, data, '\t'); //collect number of votes across all ages and genders
             movies[id]->num_votes[0][0] = floatConv(data);
-            getline(ss, data, '\t');
+            getline(ss, data, '\t'); //collect total number of votes across all ages and genders
             movies[id]->avg_votes[0][0] = floatConv(data);
 
             for (int i = 0; i < 11; i++) { //ignore next 11 lines
                 getline(ss, data, '\t');
             }
 
-            //set either male/female data (not including what has already been set)
+            //set data that includes both genders (not including what has already been set)
             for (int i = 1; i < 5; i++) {
                 getline(ss, data, '\t');
                 movies[id]->avg_votes[0][i] = floatConv(data);
@@ -321,16 +254,48 @@ MovieRec::MovieRec() {
         }
     }
     inFile.close();
-
 }
 
-MovieRec::~MovieRec() {
+MovieRec::~MovieRec() { //destructor
     auto it = movies.begin();
     while (it != movies.end()) {
         delete it->second;
         it++;
     }
     movies.clear();
+}
+
+//prints out top contents of frequency map, from most to least frequent
+void MovieRec::displayMap(unordered_map<string, int> myMap, int length) {
+    unordered_map<string, int> mapPrint = myMap;
+    for (int i = 0; i < length; i++) { //"length" number of contents should be printed
+        auto it = mapPrint.begin();
+        auto max = it;
+        while (it != mapPrint.end()) {
+            if ((it->second) > (max->second)) { //if it is the largest so far, replace the max
+                max = it;
+            }
+            it++;
+        }
+        cout << max->first;
+        mapPrint.erase(max);
+
+        //formatting
+        if (i < length - 1) {
+            cout << ", ";
+        }
+        else {
+            cout << endl;
+        }
+    }
+}
+
+void MovieRec::displayGenres() { //displays all genres
+    displayMap(genreMap, genreMap.size());
+}
+
+void MovieRec::displayLangs() { //displays top 10 languages
+    displayMap(languageMap, 10);
 }
 
 int main() {
