@@ -3,7 +3,6 @@
 #include <map>
 #include<set>
 using namespace std;
-
 class Node { //holds the data for each node in the tree
 public:
     long id;
@@ -29,7 +28,6 @@ public:
         this->right = right;
     }
 };
-
 struct comp
 {
     template<typename T>
@@ -38,7 +36,6 @@ struct comp
         return l->id < r->id;
     }
 };
-
 int main() {
     Node node1 = Node(1, "node1");
     Node node2 = Node(2, "node2");
@@ -57,12 +54,10 @@ int main() {
         st.insert(&node0);
         cout << endl;
     }
-
     //map<Node, Node*> umap;
     std::cout << "Hello, World!" << std::endl;
     return 0;
 }
-
 void printSet(unordered_set<string>& mySet) {
     auto it = mySet.begin();
     while (it != mySet.end()) {
@@ -71,7 +66,6 @@ void printSet(unordered_set<string>& mySet) {
     }
     cout << endl;
 }
-
 class Actor {
 public:
     int importance;
@@ -83,7 +77,6 @@ public:
         character = "";
     }
 };
-
  */
 
 #include <iostream>
@@ -256,6 +249,7 @@ MovieRec::MovieRec() {
 
         }
     }
+
     inFile.close();
     inFile.open("imdb_ratings.tsv");
 

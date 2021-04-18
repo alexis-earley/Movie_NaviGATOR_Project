@@ -54,6 +54,7 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "set": "cpp",
-        "unordered_map": "cpp"
+        "unordered_map": "cpp",
+        "unordered_set": "cpp"
     }
 }
