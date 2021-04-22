@@ -1,19 +1,11 @@
-#include <string>
-#include <vector>
-#include <iostream>
-#include <cmath>
-#include <queue>
-#include <set>
-#include <fstream>
-#include <unordered_set>
-#include <unordered_map>
-#include <sstream>
+#include "Movie.h"
 
 using namespace std;
 
-class Movie
+/*class Movie
 {
 public:
+    string id;
     string title;
     string original_title;
     int year;
@@ -36,6 +28,7 @@ public:
 
     Movie()
     { //default constructor
+        id = "";
         title = "";
         original_title = "";
         year = 0;
@@ -47,10 +40,9 @@ public:
         votes = -1;
         match = -1;
     }
-};
-unordered_map<string, Movie *> movies;
+};*/
 
-struct CompareMoviesMax
+/*struct CompareMoviesMax
 {
     bool operator()(const string m1, const string m2)
     {
@@ -64,12 +56,13 @@ struct CompareMoviesMin
     {
         return movies[m1]->match > movies[m2]->match;
     }
-};
-class MovieNaviGATOR
+};*/
+/*class MovieNaviGATOR
 {
-private:
-    priority_queue<string, vector<string>, CompareMoviesMax> listMax;
-    priority_queue<string, vector<string>, CompareMoviesMin> listMin;
+public:
+    //priority_queue<string, vector<string>, CompareMoviesMax> listMax;
+    //priority_queue<string, vector<string>, CompareMoviesMin> listMin;
+    unordered_map<string, Movie *> movies;
 
     unordered_map<string, int> genreMap;    //holds frequencies of genres
     unordered_map<string, int> languageMap; //holds frequencies of languages
@@ -88,7 +81,7 @@ private:
     void maxHeapCreation();
     void showpq();
 
-public:
+//public:
     MovieNaviGATOR();
     ~MovieNaviGATOR();
     void displayGenres();
@@ -96,7 +89,7 @@ public:
 
     void minHeapCreation(int num, int d, double r);
     void printMovieInfo(string title);
-};
+};*/
 
 int MovieNaviGATOR::intConv(string &input)
 { //constructor helper function; converts string to integer, if possible
@@ -218,6 +211,7 @@ MovieNaviGATOR::MovieNaviGATOR()
 
             string data;
             getline(ss, data, '\t'); //gets the ID
+            currMovie->id = data;
             id = data;
             getline(ss, data, '\t'); //gets the title
             currMovie->title = testQuotes(data);
@@ -492,9 +486,9 @@ void MovieNaviGATOR::showpq()
         temp.pop();
         n++;
     }
-}
+};
 
-int main()
+/*int main()
 {
     MovieNaviGATOR session;
 
@@ -650,4 +644,4 @@ int main()
         }
         cout << endl;
     }
-}
+}*/
