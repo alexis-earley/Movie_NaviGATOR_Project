@@ -3,12 +3,9 @@
 #include <unordered_set>
 #include <set>
 #include <unordered_map>
-#include <map>
 #include <vector>
 #include <sstream>
 #include <string>
-#include <queue>
-
 using namespace std;
 
 class MovieRec {
@@ -54,13 +51,31 @@ public:
         }
     };
 
+    class UnorderedMap { //holds movie id and movie data
+    public:
+        UnorderedMap();
+        UnorderedMap(int setCapacity);
+        ~UnorderedMap();
+        void insert(string id, Movie* newMovie);
+        Movie* find(string id);
+        void remove(string id);
+        vector<vector<pair<string, Movie*>>> table;
+    private:
+        int capacity;
+        int size;
+        int genHash(string id);
+        void rehashMap(int size);
+    };
+
     MovieRec();
     ~MovieRec();
     void displayGenres();
     void displayLangs();
 
 private:
-    unordered_map<string, Movie*> movies; //holds each movie, with the key being the movie ID
+    UnorderedMap movies = UnorderedMap(110000); //holds each movie, with the key being the movie ID
+    //initialize it with size 110000 as we know 86,000 values will be added, this will save the time of resizing
+    //(although this functionality is available)
     unordered_map<string, int> genreMap; //holds frequencies of genres
     unordered_map<string, int> languageMap; //holds frequencies of languages
 
@@ -72,6 +87,106 @@ private:
     void displayMap(unordered_map<string, int> myMap, int length);
     void insertMap(unordered_set<string> &newSet, unordered_map<string, int> &mainMap);
 };
+
+MovieRec::UnorderedMap::UnorderedMap() { //default constructor, makes room for 100 values
+    size = 0;
+    capacity = 100;
+    for (int i = 0; i < capacity; i++) {
+        vector<pair<string, Movie*>> addVector;
+        table.push_back(addVector);
+    }
+}
+
+MovieRec::UnorderedMap::UnorderedMap(int setCapacity) { //constructor that sets capacity to user-chosen value
+    size = 0;
+    capacity = setCapacity;
+    for (int i = 0; i < capacity; i++) {
+        vector<pair<string, Movie*>> addVector;
+        table.push_back(addVector);
+    }
+}
+
+MovieRec::UnorderedMap::~UnorderedMap() { //destructor
+    for (int i = 0; i < table.size(); i++) { //deletes all node pointers in the map
+        for (int j = 0; j < table[i].size(); j++) {
+            delete table[i][j].second;
+        }
+    }
+    table.clear();
+    size = 0;
+    capacity = 0;
+}
+
+int MovieRec::UnorderedMap::genHash(string id) { //generates hash code
+    //because the movie ids in the table are all integers with "tt" at the start, to convert to a hash code, we take off these letters and convert to an int
+    //we return the remainder of the division by the table size
+    string stringID = id.substr(2, id.size());
+    return stoi(stringID) % capacity;
+}
+
+void MovieRec::UnorderedMap::insert(string id, Movie* newMovie) {
+    int bucketIndex = genHash(id); //get hash code
+    string currID;
+    for (int i = 0; i < table[bucketIndex].size(); i++) { //see if the element is already in the map
+        currID = table[bucketIndex][i].first;
+        if (currID == id) {
+            table[bucketIndex][i] = make_pair(id, newMovie); //reassign this value and return
+            return;
+        }
+    }
+    table[bucketIndex].push_back(make_pair(id, newMovie));
+    size++;
+    if (((double)size / (double) capacity) > 0.8) { //if load factor is above 0.8
+        rehashMap(size);
+    }
+}
+
+MovieRec::Movie* MovieRec::UnorderedMap::find(string id) {
+    int bucketIndex = genHash(id);
+    string currID;
+    for (int i = 0; i < table[bucketIndex].size(); i++) { //iterate through the smaller vector where the value should be
+        currID = table[bucketIndex][i].first;
+        if (currID == id) {
+            return table[bucketIndex][i].second;
+        }
+    }
+    return nullptr;
+}
+
+void MovieRec::UnorderedMap::remove(string id) {
+    int bucketIndex = genHash(id);
+    string currID;
+    int i;
+    for (i = 0; i < table[bucketIndex].size(); i++) { //search to see if the element is in the map
+        currID = table[bucketIndex][i].first;
+        if (currID == id) {
+            break;
+        }
+    }
+
+    if (i < table[bucketIndex].size()) { //if the element is in the map, delete it
+        delete table[bucketIndex][i].second;
+        table[bucketIndex].erase(table[bucketIndex].begin() + i);
+        size--;
+    }
+}
+
+void MovieRec::UnorderedMap::rehashMap(int newCapacity) { //called if the load factor is exceeded
+    capacity = newCapacity;
+    vector<vector<pair<string, Movie*>>> oldTable = table; //make the table the old table
+    table.clear(); //clear the table
+    for (int i = 0; i < newCapacity; i++) { //add capacity number of empty vectors
+        vector<pair<string, Movie*>> addVector;
+        table.push_back(addVector);
+    }
+    pair<string, Movie*> currPair;
+    for (int i = 0; i < oldTable.size(); i++) {
+        for (int j = 0; j < oldTable[i].size(); j++) {
+            currPair = table[i][j];
+            insert(currPair.first, currPair.second); //insert each old value into the new table
+        }
+    }
+}
 
 int MovieRec::intConv(string& input) { //constructor helper function; converts string to integer, if possible
     int result;
@@ -204,7 +319,7 @@ MovieRec::MovieRec() { //constructor; reads through files and sets up movie unor
             getline(ss, data, '\t'); //gets the description
             currMovie->description = testQuotes(data);
 
-            movies[id] = currMovie;
+            movies.insert(id, currMovie);
 
         }
     }
@@ -226,9 +341,9 @@ MovieRec::MovieRec() { //constructor; reads through files and sets up movie unor
             getline(ss, id, '\t'); //collect the ID for the current movie
             getline(ss, trash, '\t'); //trash the following line (irrelevant info)
             getline(ss, data, '\t'); //collect number of votes across all ages and genders
-            movies[id]->num_votes[0][0] = floatConv(data);
+            movies.find(id)->num_votes[0][0] = floatConv(data);
             getline(ss, data, '\t'); //collect total number of votes across all ages and genders
-            movies[id]->avg_votes[0][0] = floatConv(data);
+            movies.find(id)->avg_votes[0][0] = floatConv(data);
 
             for (int i = 0; i < 11; i++) { //ignore next 11 lines
                 getline(ss, data, '\t');
@@ -237,18 +352,18 @@ MovieRec::MovieRec() { //constructor; reads through files and sets up movie unor
             //set data that includes both genders (not including what has already been set)
             for (int i = 1; i < 5; i++) {
                 getline(ss, data, '\t');
-                movies[id]->avg_votes[0][i] = floatConv(data);
+                movies.find(id)->avg_votes[0][i] = floatConv(data);
                 getline(ss, data, '\t');
-                movies[id]->num_votes[0][i] = floatConv(data);
+                movies.find(id)->num_votes[0][i] = floatConv(data);
             }
 
             //insert male then female data
             for (int i = 1; i < 3; i++) {
                 for (int j = 0; j < 5; j++) {
                     getline(ss, data, '\t');
-                    movies[id]->avg_votes[i][j] = floatConv(data);
+                    movies.find(id)->avg_votes[i][j] = floatConv(data);
                     getline(ss, data, '\t');
-                    movies[id]->num_votes[i][j] = floatConv(data);
+                    movies.find(id)->num_votes[i][j] = floatConv(data);
                 }
             }
         }
@@ -257,12 +372,7 @@ MovieRec::MovieRec() { //constructor; reads through files and sets up movie unor
 }
 
 MovieRec::~MovieRec() { //destructor
-    auto it = movies.begin();
-    while (it != movies.end()) {
-        delete it->second;
-        it++;
-    }
-    movies.clear();
+    //can remain empty because all memory management is taken care of in the unordered map
 }
 
 //prints out top contents of frequency map, from most to least frequent
