@@ -1,11 +1,17 @@
-#include "Movie.h"
-
+#include <iostream>
+#include <fstream>
+#include <unordered_set>
+#include <set>
+#include <unordered_map>
+#include <vector>
+#include <sstream>
+#include <string>
 using namespace std;
 
-/*class Movie
-{
+class Movie
+{ //holds the data for each node in the tree
 public:
-    string id;
+    double match;
     string title;
     string original_title;
     int year;
@@ -21,14 +27,11 @@ public:
     string description;
     float avg_vote;
     int votes;
-    double avg_votes[3][5] = {0};
-    double num_votes[3][5] = {0};
-
-    float match;
+    double avg_votes[3][5]; //holds ratings across different age groups and genders
+    double num_votes[3][5]; //same as above, but with total numbers of votes instead of average numbers of votes
 
     Movie()
     { //default constructor
-        id = "";
         title = "";
         original_title = "";
         year = 0;
@@ -36,62 +39,191 @@ public:
         duration = 0;
         production_company = "";
         description = "";
-        avg_vote = -1;
-        votes = -1;
-        match = -1;
-    }
-};*/
-
-/*struct CompareMoviesMax
-{
-    bool operator()(const string m1, const string m2)
-    {
-        return movies[m1]->match < movies[m2]->match;
+        for (int i = 0; i < 3; i++)
+        { //fill 2D array with 0's
+            for (int j = 0; j < 5; j++)
+            {
+                avg_votes[i][j] = 0;
+            }
+        }
+        for (int i = 0; i < 3; i++)
+        { //again fill 2D array with 0's
+            for (int j = 0; j < 5; j++)
+            {
+                num_votes[i][j] = 0;
+            }
+        }
     }
 };
 
-struct CompareMoviesMin
-{
-    bool operator()(const string m1, const string m2)
-    {
-        return movies[m1]->match > movies[m2]->match;
-    }
-};*/
-/*class MovieNaviGATOR
+class MovieNaviGator
 {
 public:
-    //priority_queue<string, vector<string>, CompareMoviesMax> listMax;
-    //priority_queue<string, vector<string>, CompareMoviesMin> listMin;
-    unordered_map<string, Movie *> movies;
+    class UnorderedMap
+    { //holds movie id and movie data
+    public:
+        UnorderedMap();
+        UnorderedMap(int setCapacity);
+        ~UnorderedMap();
+        void insert(string id, Movie *newMovie);
+        Movie *find(string id);
+        void remove(string id);
+        vector<vector<pair<string, Movie *>>> table;
 
+    private:
+        int capacity;
+        int size;
+        int genHash(string id);
+        void rehashMap(int size);
+    };
+
+    MovieNaviGator();
+    ~MovieNaviGator();
+    void displayGenres();
+    void displayLangs();
+
+private:
+    UnorderedMap movies = UnorderedMap(110000); //holds each movie, with the key being the movie ID
+    //initialize it with size 110000 as we know 86,000 values will be added, this will save the time of resizing
+    //(although this functionality is available)
     unordered_map<string, int> genreMap;    //holds frequencies of genres
     unordered_map<string, int> languageMap; //holds frequencies of languages
 
     int intConv(string &input);
     float floatConv(string &input);
-
     unordered_set<string> setConv(string input);
     vector<string> vectorConv(string input);
     string testQuotes(string &input);
     void displayMap(unordered_map<string, int> myMap, int length);
     void insertMap(unordered_set<string> &newSet, unordered_map<string, int> &mainMap);
-
     void makeMatch(string id, int d, double r);
     void printSet(unordered_set<string> temp);
-    void maxHeapCreation();
-    void showpq();
+};
 
-//public:
-    MovieNaviGATOR();
-    ~MovieNaviGATOR();
-    void displayGenres();
-    void displayLangs();
+MovieNaviGator::UnorderedMap::UnorderedMap()
+{ //default constructor, makes room for 100 values
+    size = 0;
+    capacity = 100;
+    for (int i = 0; i < capacity; i++)
+    {
+        vector<pair<string, Movie *>> addVector;
+        table.push_back(addVector);
+    }
+}
 
-    void minHeapCreation(int num, int d, double r);
-    void printMovieInfo(string title);
-};*/
+MovieNaviGator::UnorderedMap::UnorderedMap(int setCapacity)
+{ //constructor that sets capacity to user-chosen value
+    size = 0;
+    capacity = setCapacity;
+    for (int i = 0; i < capacity; i++)
+    {
+        vector<pair<string, Movie *>> addVector;
+        table.push_back(addVector);
+    }
+}
 
-int MovieNaviGATOR::intConv(string &input)
+MovieNaviGator::UnorderedMap::~UnorderedMap()
+{ //destructor
+    for (int i = 0; i < table.size(); i++)
+    { //deletes all node pointers in the map
+        for (int j = 0; j < table[i].size(); j++)
+        {
+            delete table[i][j].second;
+        }
+    }
+    table.clear();
+    size = 0;
+    capacity = 0;
+}
+
+int MovieNaviGator::UnorderedMap::genHash(string id)
+{ //generates hash code
+    //because the movie ids in the table are all integers with "tt" at the start, to convert to a hash code, we take off these letters and convert to an int
+    //we return the remainder of the division by the table size
+    string stringID = id.substr(2, id.size());
+    return stoi(stringID) % capacity;
+}
+
+void MovieNaviGator::UnorderedMap::insert(string id, Movie *newMovie)
+{
+    int bucketIndex = genHash(id); //get hash code
+    string currID;
+    for (int i = 0; i < table[bucketIndex].size(); i++)
+    { //see if the element is already in the map
+        currID = table[bucketIndex][i].first;
+        if (currID == id)
+        {
+            table[bucketIndex][i] = make_pair(id, newMovie); //reassign this value and return
+            return;
+        }
+    }
+    table[bucketIndex].push_back(make_pair(id, newMovie));
+    size++;
+    if (((double)size / (double)capacity) > 0.8)
+    { //if load factor is above 0.8
+        rehashMap(size);
+    }
+}
+
+Movie *MovieNaviGator::UnorderedMap::find(string id)
+{
+    int bucketIndex = genHash(id);
+    string currID;
+    for (int i = 0; i < table[bucketIndex].size(); i++)
+    { //iterate through the smaller vector where the value should be
+        currID = table[bucketIndex][i].first;
+        if (currID == id)
+        {
+            return table[bucketIndex][i].second;
+        }
+    }
+    return nullptr;
+}
+
+void MovieNaviGator::UnorderedMap::remove(string id)
+{
+    int bucketIndex = genHash(id);
+    string currID;
+    int i;
+    for (i = 0; i < table[bucketIndex].size(); i++)
+    { //search to see if the element is in the map
+        currID = table[bucketIndex][i].first;
+        if (currID == id)
+        {
+            break;
+        }
+    }
+
+    if (i < table[bucketIndex].size())
+    { //if the element is in the map, delete it
+        delete table[bucketIndex][i].second;
+        table[bucketIndex].erase(table[bucketIndex].begin() + i);
+        size--;
+    }
+}
+
+void MovieNaviGator::UnorderedMap::rehashMap(int newCapacity)
+{ //called if the load factor is exceeded
+    capacity = newCapacity;
+    vector<vector<pair<string, Movie *>>> oldTable = table; //make the table the old table
+    table.clear();                                          //clear the table
+    for (int i = 0; i < newCapacity; i++)
+    { //add capacity number of empty vectors
+        vector<pair<string, Movie *>> addVector;
+        table.push_back(addVector);
+    }
+    pair<string, Movie *> currPair;
+    for (int i = 0; i < oldTable.size(); i++)
+    {
+        for (int j = 0; j < oldTable[i].size(); j++)
+        {
+            currPair = table[i][j];
+            insert(currPair.first, currPair.second); //insert each old value into the new table
+        }
+    }
+}
+
+int MovieNaviGator::intConv(string &input)
 { //constructor helper function; converts string to integer, if possible
     int result;
     try
@@ -105,7 +237,7 @@ int MovieNaviGATOR::intConv(string &input)
     return result;
 }
 
-float MovieNaviGATOR::floatConv(string &input)
+float MovieNaviGator::floatConv(string &input)
 { //constructor helper function; converts string to float, if possible
     float result;
     try
@@ -119,7 +251,7 @@ float MovieNaviGATOR::floatConv(string &input)
     return result;
 }
 
-unordered_set<string> MovieNaviGATOR::setConv(string input)
+unordered_set<string> MovieNaviGator::setConv(string input)
 { //constructor helper function; breaks apart string by commas and places into an unordered set
     unordered_set<string> result;
     string currString = "";
@@ -140,7 +272,7 @@ unordered_set<string> MovieNaviGATOR::setConv(string input)
     return result;
 }
 
-vector<string> MovieNaviGATOR::vectorConv(string input)
+vector<string> MovieNaviGator::vectorConv(string input)
 { //constructor helper function; breaks apart string by commas and places into a vector
     vector<string> result;
     string currString = "";
@@ -161,7 +293,7 @@ vector<string> MovieNaviGATOR::vectorConv(string input)
     return result;
 }
 
-string MovieNaviGATOR::testQuotes(string &input)
+string MovieNaviGator::testQuotes(string &input)
 { //constructor helper function; removes quotes from a string, if present
     int lastChar = input.size() - 1;
     string result;
@@ -172,7 +304,7 @@ string MovieNaviGATOR::testQuotes(string &input)
     return input;
 }
 
-void MovieNaviGATOR::insertMap(unordered_set<string> &newSet, unordered_map<string, int> &mainMap)
+void MovieNaviGator::insertMap(unordered_set<string> &newSet, unordered_map<string, int> &mainMap)
 { //constructor helper function; puts contents of set into map frequency table
     auto it = newSet.begin();
     while (it != newSet.end())
@@ -189,12 +321,12 @@ void MovieNaviGATOR::insertMap(unordered_set<string> &newSet, unordered_map<stri
     }
 }
 
-MovieNaviGATOR::MovieNaviGATOR()
-{
+MovieNaviGator::MovieNaviGator()
+{ //constructor; reads through files and sets up movie unordered_map
     string line;
     vector<string> myString;
     ifstream inFile;
-    inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_movies.tsv"); //first file; contains main movie data, but no detailed rating data, about 86k lines
+    inFile.open("imdb_movies.tsv"); //first file; contains main movie data, but no detailed rating data, about 86k lines
     if (inFile.is_open())
     {
 
@@ -211,7 +343,6 @@ MovieNaviGATOR::MovieNaviGATOR()
 
             string data;
             getline(ss, data, '\t'); //gets the ID
-            currMovie->id = data;
             id = data;
             getline(ss, data, '\t'); //gets the title
             currMovie->title = testQuotes(data);
@@ -246,11 +377,11 @@ MovieNaviGATOR::MovieNaviGATOR()
             getline(ss, data, '\t'); //gets the description
             currMovie->description = testQuotes(data);
 
-            movies[id] = currMovie;
+            movies.insert(id, currMovie);
         }
     }
     inFile.close();
-    /*inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
+    inFile.open("imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
 
     if (inFile.is_open())
     {
@@ -269,9 +400,9 @@ MovieNaviGATOR::MovieNaviGATOR()
             getline(ss, id, '\t');    //collect the ID for the current movie
             getline(ss, trash, '\t'); //trash the following line (irrelevant info)
             getline(ss, data, '\t');  //collect number of votes across all ages and genders
-            movies[id]->num_votes[0][0] = floatConv(data);
+            movies.find(id)->num_votes[0][0] = floatConv(data);
             getline(ss, data, '\t'); //collect total number of votes across all ages and genders
-            movies[id]->avg_votes[0][0] = floatConv(data);
+            movies.find(id)->avg_votes[0][0] = floatConv(data);
 
             for (int i = 0; i < 11; i++)
             { //ignore next 11 lines
@@ -282,9 +413,9 @@ MovieNaviGATOR::MovieNaviGATOR()
             for (int i = 1; i < 5; i++)
             {
                 getline(ss, data, '\t');
-                movies[id]->avg_votes[0][i] = floatConv(data);
+                movies.find(id)->avg_votes[0][i] = floatConv(data);
                 getline(ss, data, '\t');
-                movies[id]->num_votes[0][i] = floatConv(data);
+                movies.find(id)->num_votes[0][i] = floatConv(data);
             }
 
             //insert male then female data
@@ -293,29 +424,23 @@ MovieNaviGATOR::MovieNaviGATOR()
                 for (int j = 0; j < 5; j++)
                 {
                     getline(ss, data, '\t');
-                    movies[id]->avg_votes[i][j] = floatConv(data);
+                    movies.find(id)->avg_votes[i][j] = floatConv(data);
                     getline(ss, data, '\t');
-                    movies[id]->num_votes[i][j] = floatConv(data);
+                    movies.find(id)->num_votes[i][j] = floatConv(data);
                 }
             }
         }
     }
-    inFile.close();*/
+    inFile.close();
 }
 
-MovieNaviGATOR::~MovieNaviGATOR()
+MovieNaviGator::~MovieNaviGator()
 { //destructor
-    auto it = movies.begin();
-    while (it != movies.end())
-    {
-        delete it->second;
-        it++;
-    }
-    movies.clear();
+    //can remain empty because all memory management is taken care of in the unordered map
 }
 
 //prints out top contents of frequency map, from most to least frequent
-void MovieNaviGATOR::displayMap(unordered_map<string, int> myMap, int length)
+void MovieNaviGator::displayMap(unordered_map<string, int> myMap, int length)
 {
     unordered_map<string, int> mapPrint = myMap;
     for (int i = 0; i < length; i++)
@@ -345,24 +470,24 @@ void MovieNaviGATOR::displayMap(unordered_map<string, int> myMap, int length)
     }
 }
 
-void MovieNaviGATOR::displayGenres()
+void MovieNaviGator::displayGenres()
 { //displays all genres
     displayMap(genreMap, genreMap.size());
 }
 
-void MovieNaviGATOR::displayLangs()
+void MovieNaviGator::displayLangs()
 { //displays top 10 languages
     displayMap(languageMap, 10);
 }
 
-void MovieNaviGATOR::makeMatch(string id, int d, double r)
+void MovieNaviGator::makeMatch(string id, int d, double r)
 {
     //cout << "match" << endl;
-    movies[id]->match = ((double)rand() / (RAND_MAX));
+    //movies[id]->match = ((double)rand() / (RAND_MAX));
     //cout << movies[id]->match << endl;
 }
 
-/*void MovieNaviGATOR::minHeapCreation(int num, int d, double r)
+/*void MovieNaviGator::minHeapCreation(int num, int d, double r)
 {
     //cout << "min heap" << endl;
     //cout << movies.size() << endl;
@@ -389,7 +514,7 @@ void MovieNaviGATOR::makeMatch(string id, int d, double r)
     maxHeapCreation();
 }*/
 
-/*void MovieNaviGATOR::maxHeapCreation()
+/*void MovieNaviGator::maxHeapCreation()
 {
     //cout << listMin.size() << endl;
     while (!listMin.empty())
@@ -402,7 +527,7 @@ void MovieNaviGATOR::makeMatch(string id, int d, double r)
     showpq();
 }*/
 
-/*void MovieNaviGATOR::printMovieInfo(string title)
+/*void MovieNaviGator::printMovieInfo(string title)
 {
     Movie *current;
     while (!listMax.empty())
@@ -457,7 +582,7 @@ void MovieNaviGATOR::makeMatch(string id, int d, double r)
     }
 }*/
 
-void MovieNaviGATOR::printSet(unordered_set<string> temp)
+void MovieNaviGator::printSet(unordered_set<string> temp)
 {
     // Creating a iterator pointing to start of set
     unordered_set<string>::iterator it = temp.begin();
@@ -471,7 +596,7 @@ void MovieNaviGATOR::printSet(unordered_set<string> temp)
     }
 }
 
-/*void MovieNaviGATOR::showpq()
+/*void MovieNaviGator::showpq()
 {
     priority_queue<string, vector<string>, CompareMoviesMax> temp = listMax;
     if (temp.empty())
@@ -490,9 +615,9 @@ void MovieNaviGATOR::printSet(unordered_set<string> temp)
 
 /*int main()
 {
-    MovieNaviGATOR session;
+    MovieNaviGator session;
 
-    cout << "Welcome to MovieNAVIGATOR!" << endl;
+    cout << "Welcome to MovieNAVIGator!" << endl;
 
     int n = 1;
     int duration;
