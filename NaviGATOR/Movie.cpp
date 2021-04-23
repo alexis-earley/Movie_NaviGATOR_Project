@@ -362,7 +362,7 @@ void MovieNaviGATOR::makeMatch(string id, int d, double r)
     //cout << movies[id]->match << endl;
 }
 
-void MovieNaviGATOR::minHeapCreation(int num, int d, double r)
+/*void MovieNaviGATOR::minHeapCreation(int num, int d, double r)
 {
     //cout << "min heap" << endl;
     //cout << movies.size() << endl;
@@ -387,9 +387,9 @@ void MovieNaviGATOR::minHeapCreation(int num, int d, double r)
         }
     }
     maxHeapCreation();
-}
+}*/
 
-void MovieNaviGATOR::maxHeapCreation()
+/*void MovieNaviGATOR::maxHeapCreation()
 {
     //cout << listMin.size() << endl;
     while (!listMin.empty())
@@ -400,9 +400,9 @@ void MovieNaviGATOR::maxHeapCreation()
     }
     //cout << listMax.size() << endl;
     showpq();
-}
+}*/
 
-void MovieNaviGATOR::printMovieInfo(string title)
+/*void MovieNaviGATOR::printMovieInfo(string title)
 {
     Movie *current;
     while (!listMax.empty())
@@ -455,7 +455,7 @@ void MovieNaviGATOR::printMovieInfo(string title)
         cout << "Average Vote: " << current->avg_vote << endl;
         cout << "Votes: " << current->votes << endl;
     }
-}
+}*/
 
 void MovieNaviGATOR::printSet(unordered_set<string> temp)
 {
@@ -471,7 +471,7 @@ void MovieNaviGATOR::printSet(unordered_set<string> temp)
     }
 }
 
-void MovieNaviGATOR::showpq()
+/*void MovieNaviGATOR::showpq()
 {
     priority_queue<string, vector<string>, CompareMoviesMax> temp = listMax;
     if (temp.empty())
@@ -486,7 +486,7 @@ void MovieNaviGATOR::showpq()
         temp.pop();
         n++;
     }
-};
+};*/
 
 /*int main()
 {

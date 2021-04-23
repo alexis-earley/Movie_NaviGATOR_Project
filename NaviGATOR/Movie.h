@@ -51,9 +51,9 @@ public:
     }
 };
 
-unordered_map<string, Movie *> movies;
 
-struct CompareMoviesMax
+
+/*struct CompareMoviesMax
 {
     bool operator()(const string m1, const string m2)
     {
@@ -67,14 +67,15 @@ struct CompareMoviesMin
     {
         return movies[m1]->match > movies[m2]->match;
     }
-};
+};*/
 
 class MovieNaviGATOR
 {
 public:
-    priority_queue<string, vector<string>, CompareMoviesMax> listMax;
-    priority_queue<string, vector<string>, CompareMoviesMin> listMin;
-
+    //priority_queue<string, vector<string>, CompareMoviesMax> listMax;
+    //priority_queue<string, vector<string>, CompareMoviesMin> listMin;
+    unordered_map<string, Movie *> movies;
+    
     unordered_map<string, int> genreMap;    //holds frequencies of genres
     unordered_map<string, int> languageMap; //holds frequencies of languages
 

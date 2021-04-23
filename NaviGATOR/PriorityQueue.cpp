@@ -24,6 +24,8 @@ private:
     unordered_set<string> writers;
     vector<string> actors;
 
+    int current = 0;
+
 public:
     PriorityQueue()
     {
@@ -97,103 +99,98 @@ public:
         actors = a;
     }
 
-    void PQPrint()
+    void PQPrint(vector<Movie *> &heap)
     {
-        for (Movie *m : maxPQ)
-        {
-            cout << m->title << endl;
-        }
+        for (Movie *m : heap)
+            cout << m->title << ": " << m->match << endl;
     }
 
-    void heapifyDown(int &size, int index)
+    void heapifyDown(vector<Movie *> &heap, int &size, int index)
     {
         int largest = index;
         int left = 2 * index + 1;
         int right = 2 * index + 2;
 
-        if (left < size && minPQ[left]->match < minPQ[index]->match && minPQ[left]->match < minPQ[right]->match)
-        {
+        // If left child is larger than root
+        if (left < size && heap[left] > heap[largest])
             largest = left;
-            swap(minPQ[index], minPQ[largest]);
-            heapifyDown(size, largest);
-        }
-        else if (right < size && minPQ[right] < minPQ[largest] && minPQ[right] < minPQ[left])
-        {
+
+        // If right child is larger than largest so far
+        if (right < size && heap[right] > heap[largest])
             largest = right;
-            swap(minPQ[index], minPQ[largest]);
-            heapifyDown(size, largest);
+
+        // If largest is not root
+        if (largest != index)
+        {
+            swap(heap[index], heap[largest]);
+
+            // Recursively heapify the affected sub-tree
+            heapifyDown(heap, size, largest);
         }
     }
 
     // Recursive heapify-up algorithm
-    void heapifyUp(int i)
+    void heapifyUp(vector<Movie *> &heap, int i)
     {
-        // check if the node at index `i` and its parent violate the heap property
-        if (i && minPQ[((i - 1) / 2)] < minPQ[i])
-        {
-            // swap the two if heap property is violated
-            swap(minPQ[i], minPQ[((i - 1) / 2)]);
+        int parent = (i - 1) / 2;
 
-            // call heapify-up on the parent
-            heapifyUp((i - 1) / 2);
+        if (parent >= 0)
+        {
+            if (heap[i] > heap[parent])
+            {
+                // swap the two if heap property is violated
+                swap(heap[i], heap[parent]);
+
+                // call heapify-up on the parent
+                heapifyUp(heap, parent);
+            }
         }
     }
 
     void PQRemove(vector<Movie *> &heap)
     {
         heap[0] = heap.back();
+        //cout << "Removing " << heap.back()->title << ": " << heap.back()->match << endl;
         heap.pop_back();
         size--;
-        heapifyDown(size, 0);
+        heapifyDown(heap, size, 0);
     }
 
     void PQInsert(vector<Movie *> &heap, Movie *temp)
     {
         heap.push_back(temp);
-        int index = size - 1;
-        heapifyUp(index);
+        size++;
+        heapifyUp(heap, size - 1);
     }
 
-    void makeMatch(string id)
+    void makeMatch(unordered_map<string, Movie *> &movies, string id)
     {
         movies[id]->match = ((double)rand() / (RAND_MAX));
     }
 
     //Code referenced to GeeksforGeeks
-    void buildMinPQ()
+    void buildMinPQ(unordered_map<string, Movie *> &movies)
     {
-        cout << movies.size() << endl;
-        int i = 1;
+
         for (auto it = movies.begin(); it != movies.end(); ++it)
         {
-            if (number > 0)
-            {
-                //makeMatch(it->first);
-                if (minPQ.size() > number && (it->second)->match < minPQ[0]->match)
-                {
-                    continue;
-                }
-
-                PQInsert(minPQ, it->second);
-                if (minPQ.size() > number)
-                {
-                    PQRemove(minPQ);
-                }
-                it++;
-            }
-            i++;
+            current++;
+            makeMatch(movies, it->first);
+            PQInsert(minPQ, it->second);
+            //cout << "Inserting " << it->second->title << ": " << it->second->match << endl;
+            if (minPQ.size() > number)
+                PQRemove(minPQ);
+            it++;
         }
         buildMaxPQ();
     }
 
     void buildMaxPQ()
     {
-        while (!minPQ.empty())
-        {
-            PQInsert(maxPQ, minPQ[0]);
-            PQRemove(minPQ);
-        }
-        PQPrint();
+        maxPQ = minPQ;
+        for (int i = (size - 2) / 2; i >= 0; --i)
+            heapifyDown(maxPQ, i, size);
+        PQPrint(maxPQ);
     }
 };
 
@@ -349,7 +346,7 @@ int main()
             cin >> number;
             Q.setNumber(number);
             cout << "Your top " << number << " movies are:" << endl;
-            Q.buildMinPQ();
+            Q.buildMinPQ(session.movies);
             /*cout << "Would you like more information about any of these movies? (Y/N)" << endl;
             cin >> data;
             if (data == "Y")
