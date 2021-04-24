@@ -27,7 +27,7 @@ public:
     string description;
     float avg_vote;
     int votes;
-    double avg_votes[3][5] = {0}; //holds ratings across different age groups and genders
+    double avg_votes[3][5]; //holds ratings across different age groups and genders
     double num_votes;       //same as above, but with total numbers of votes instead of average numbers of votes
 
     Movie()
@@ -40,6 +40,13 @@ public:
         production_company = "";
         description = "";
         num_votes = 0;
+        for (int i = 0; i < 3; i++)
+        { //fill 2D array with 0's
+            for (int j = 0; j < 5; j++)
+            {
+                avg_votes[i][j] = 0;
+            }
+        }
     }
 };
 
@@ -119,7 +126,7 @@ public:
         return nullptr;
     }
 
-    void remove(string id)
+    void pop(string id)
     {
         int bucketIndex = genHash(id);
         string currID;
@@ -174,13 +181,14 @@ private:
     }
 };
 
-//min PQ implementation
-class PriorityQueue
+struct PriorityQueue
 {
 private:
-    vector<Movie *> minPQ;
-    vector<Movie *> maxPQ;
-    int size;
+    // vector to store heap elements
+    vector<Movie *> min;
+    vector<Movie *> max;
+    vector<Movie *> copy;
+    //int size;
     int capacity;
 
     int duration;
@@ -198,10 +206,211 @@ private:
 
     int current = 0;
 
+    // Recursive heapify-down algorithm.
+    // The node at index `i` and its two direct children
+    // violates the heap property
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void heapify_down_max(int i)
+    {
+        // get left and right child of node at index `i`
+        int left = 2 * i + 1;
+        int right = 2 * i + 2;
+
+        int largest = i;
+
+        // compare `max[i]` with its left and right child
+        // and find the largest value
+        if (left < max.size() && max[left]->match > max[i]->match)
+        {
+            largest = left;
+        }
+
+        if (right < max.size() && max[right]->match > max[largest]->match)
+        {
+            largest = right;
+        }
+
+        // swap with max child having greater value and
+        // call heapify-down on the child
+        if (largest != i)
+        {
+            swap(max[i], max[largest]);
+            heapify_down_max(largest);
+        }
+    }
+
+    // Recursive heapify-up algorithm
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void heapify_up_max(int i)
+    {
+        // check if the node at index `i` and its parent violate the heap property
+        if (i && max[(i - 1) / 2]->match < max[i]->match)
+        {
+            // swap the two if heap property is violated
+            swap(max[i], max[(i - 1) / 2]);
+
+            // call heapify-up on the parent
+            heapify_up_max((i - 1) / 2);
+        }
+    }
+
+    // Recursive heapify-down algorithm.
+    // The node at index `i` and its two direct children
+    // violates the heap property
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void heapify_down_min(int i)
+    {
+        // get left and right child of node at index `i`
+        int left = 2 * i + 1;
+        int right = 2 * i + 2;
+
+        int smallest = i;
+
+        // compare `min[i]` with its left and right child
+        // and find the smallest value
+        if (left < min.size() && min[left]->match < min[i]->match)
+        {
+            smallest = left;
+        }
+
+        if (right < min.size() && min[right]->match < min[smallest]->match)
+        {
+            smallest = right;
+        }
+
+        // swap with min child having lesser value and
+        // call heapify-down on the child
+        if (smallest != i)
+        {
+            swap(min[i], min[smallest]);
+            heapify_down_min(smallest);
+        }
+    }
+
+    // Recursive heapify-up algorithm
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void heapify_up_min(int i)
+    {
+        // check if the node at index `i` and its parent violate the heap property
+        if (i && min[(i - 1) / 2]->match > min[i]->match)
+        {
+            // swap the two if heap property is violated
+            swap(min[i], min[(i - 1) / 2]);
+
+            // call heapify-up on the parent
+            heapify_up_min((i - 1) / 2);
+        }
+    }
+
+    // insert key into the heap
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void push_min(Movie *key)
+    {
+        // insert min new element at the end of the vector
+        min.push_back(key);
+
+        // get element index and call heapify-up procedure
+        int index = min.size() - 1;
+        heapify_up_min(index);
+    }
+
+    // Function to remove an element with the lowest priority (present at the root)
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void pop_min()
+    {
+        // replace the root of the heap with the last element
+        // of the vector
+        min[0] = min.back();
+        min.pop_back();
+
+        // call heapify-down on the root node
+        heapify_down_min(0);
+    }
+
+    // Function to return an element with the lowest priority (present at the root)
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    Movie *top_min()
+    {
+        // otherwise, return the top_min (first) element
+        return min.at(0); // or return min[0];
+    }
+
+    void show_max()
+    {
+        copy = max;
+        while (max.size() > 0)
+        {
+            cout << top_max()->title << ": " << top_max()->match << endl;
+            pop_max();
+        }
+    }
+
+    // insert key into the heap
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void push_max(Movie *key)
+    {
+        // insert max new element at the end of the vector
+        max.push_back(key);
+
+        // get element index and call heapify-up procedure
+        int index = max.size() - 1;
+        heapify_up_max(index);
+    }
+
+    // Function to remove an element with the highest priority (present at the root)
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void pop_max()
+    {
+        // replace the root of the heap with the last element
+        // of the vector
+        max[0] = max.back();
+        max.pop_back();
+
+        // call heapify-down on the root node
+        heapify_down_max(0);
+    }
+
+    // Function to return an element with the highest priority (present at the root)
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    Movie *top_max()
+    {
+        // otherwise, return the top (first) element
+        return max.at(0); // or return max[0];
+    }
+
+    void makeMatch(UnorderedMap &movies, string id)
+    {
+        movies.find(id)->match = ((double)rand() / (RAND_MAX));
+    }
+
+    void buildMax()
+    {
+        while (min.size() > 0)
+        {
+            push_max(top_min());
+            pop_min();
+        }
+        show_max();
+    }
+
+    Movie *find(string title)
+    {
+        bool found = false;
+        for (Movie *m : copy)
+        {
+            if (m->title == title)
+            {
+                found = true;
+                return m;
+            }
+        }
+        return nullptr;
+    }
+
 public:
     PriorityQueue()
     {
-        size = 0;
+        //size = 0;
         capacity = 100;
 
         duration = 0;
@@ -213,8 +422,8 @@ public:
 
     ~PriorityQueue()
     { //destructor
-        minPQ.clear();
-        maxPQ.clear();
+        min.clear();
+        max.clear();
     }
 
     void setDuration(int d)
@@ -272,127 +481,30 @@ public:
         actors = a;
     }
 
-    void PQPrint(vector<Movie *> &heap)
-    {
-        while (number > 0)
-        {
-            cout << heap[0]->title << ": " << heap[0]->match << endl;
-            PQRemove(heap);
-            number--;
-        }
-    }
-
-    //https://www.geeksforgeeks.org/insertion-and-deletion-in-heaps/
-    void heapifyDown(vector<Movie *> &heap, int &size, int index)
-    {
-        int largest = index;
-        int left = 2 * index + 1;
-        int right = 2 * index + 2;
-
-        // If left child is larger than root
-        if (left < size && heap[left] > heap[largest])
-            largest = left;
-
-        // If right child is larger than largest so far
-        if (right < size && heap[right] > heap[largest])
-            largest = right;
-
-        // If largest is not root
-        if (largest != index)
-        {
-            swap(heap[index], heap[largest]);
-
-            // Recursively heapify the affected sub-tree
-            heapifyDown(heap, size, largest);
-        }
-    }
-
-    // https://www.geeksforgeeks.org/insertion-and-deletion-in-heaps/
-    void heapifyUp(vector<Movie *> &heap, int i)
-    {
-        int parent = (i - 1) / 2;
-
-        if (parent >= 0)
-        {
-            if (heap[i] > heap[parent])
-            {
-                // swap the two if heap property is violated
-                swap(heap[i], heap[parent]);
-
-                // call heapify-up on the parent
-                heapifyUp(heap, parent);
-            }
-        }
-    }
-
-    //https://www.geeksforgeeks.org/insertion-and-deletion-in-heaps/
-    void PQRemove(vector<Movie *> &heap)
-    {
-        heap[0] = heap.back();
-        //cout << "Removing " << heap.back()->title << ": " << heap.back()->match << endl;
-        heap.pop_back();
-        size--;
-        heapifyDown(heap, size, 0);
-    }
-
-    //https://www.geeksforgeeks.org/insertion-and-deletion-in-heaps/
-    void PQInsert(vector<Movie *> &heap, Movie *temp)
-    {
-        heap.push_back(temp);
-        //cout << "Inserting " << heap.back()->title << ": " << heap.back()->match << endl;
-        size++;
-        heapifyUp(heap, size - 1);
-    }
-
-    void makeMatch(UnorderedMap &movies, string id)
-    {
-        movies.find(id)->match = ((double)rand() / (RAND_MAX));
-    }
-
-    //Code referenced to GeeksforGeeks
-    void buildMinPQ(UnorderedMap &movies)
+    void buildMin(UnorderedMap &movies)
     {
         for (int i = 0; i < movies.table.size(); i++)
         {
             for (int j = 0; j < movies.table[i].size(); j++)
             {
                 makeMatch(movies, movies.table[i][j].first);
-                if (minPQ.size() > capacity && movies.table[i][j].second->match < minPQ[0]->match)
+                if (min.size() > number && movies.table[i][j].second->match < top_min()->match)
+                {
                     continue;
-                PQInsert(minPQ, movies.table[i][j].second);
-                if (minPQ.size() > capacity)
-                    PQRemove(minPQ);
+                }
+                push_min(movies.table[i][j].second);
+                if (min.size() > number)
+                {
+                    pop_min();
+                };
             }
         }
-        //PQPrint(minPQ);
-        buildMaxPQ();
-    }
-
-    //https://www.geeksforgeeks.org/convert-min-heap-to-max-heap/
-    void buildMaxPQ()
-    {
-        maxPQ = minPQ;
-        for (int i = (size - 2) / 2; i >= 0; --i)
-            heapifyDown(maxPQ, i, size);
-        PQPrint(maxPQ);
-    }
-
-    Movie *find(string title)
-    {
-        bool found = false;
-        for (Movie *m : maxPQ)
-        {
-            if (m->title == title)
-            {
-                found = true;
-                return m;
-            }
-        }
-        return nullptr;
+        buildMax();
     }
 
     void printMovieInfo(string title)
     {
+        cout << copy.size() << endl;
         Movie *current = find(title);
         if (!current)
         {
@@ -422,9 +534,9 @@ public:
             cout << endl;
             cout << "Production Company: " << current->production_company << endl;
             cout << "Actors: ";
-            // Creating a iterator pointing to start of set
+            // Creating a iterator pointing to start of vector
             vector<string>::iterator it = current->actors.begin();
-            // Iterate till the end of set
+            // Iterate till the end of vector
             while (it != current->actors.end())
             {
                 // Print the element
@@ -434,8 +546,8 @@ public:
             }
             cout << endl;
             cout << "Description: " << current->description << endl;
-            cout << "Average Vote: " << current->avg_vote << endl;
-            cout << "Votes: " << current->votes << endl;
+            //cout << "Average Vote: " << current->avg_vote << endl;
+            //cout << "Votes: " << current->votes << endl;
         }
     }
 
@@ -469,8 +581,8 @@ public:
         inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_movies.tsv"); //first file; contains main movie data, but no detailed rating data, about 86k lines
         if (inFile.is_open())
         {
-            cout << "file is open!" << endl;
-            //remove heading
+            //pop heading
+            //cout << "file is open!" << endl;
             getline(inFile, line);
             getline(inFile, line);
 
@@ -495,7 +607,6 @@ public:
                 getline(ss, data, '\t'); //gets the genres
                 unordered_set<string> genres = setConv(testQuotes(data));
                 currMovie->genres = genres;
-                insertMap(genres, genreMap);
 
                 getline(ss, data, '\t'); //gets the duration
                 currMovie->duration = intConv(data);
@@ -504,7 +615,6 @@ public:
                 getline(ss, data, '\t'); //gets the languages
                 unordered_set<string> languages = setConv(testQuotes(data));
                 currMovie->languages = languages;
-                insertMap(languages, languageMap);
 
                 getline(ss, data, '\t'); //gets the directors
                 currMovie->directors = setConv(testQuotes(data));
@@ -525,7 +635,7 @@ public:
 
         if (inFile.is_open())
         {
-            //remove heading
+            //pop heading
             getline(inFile, line);
             getline(inFile, line);
 
@@ -590,7 +700,7 @@ public:
             while (it != mapPrint.end())
             {
                 if ((it->second) > (max->second))
-                { //if it is the largest so far, replace the max
+                { //if it is the smallest so far, replace the max
                     max = it;
                 }
                 it++;
@@ -695,7 +805,7 @@ private:
     }
 
     string testQuotes(string &input)
-    { //constructor helper function; removes quotes from a string, if present
+    { //constructor helper function; pops quotes from a string, if present
         int lastChar = input.size() - 1;
         string result;
         if ((input[0] == '\"') && (input[lastChar] == '\"'))
@@ -874,7 +984,7 @@ int main()
             cin >> number;
             session.recommendations->setNumber(number);
             cout << "Your top " << number << " movies are:" << endl;
-            session.recommendations->buildMinPQ(session.movies);
+            session.recommendations->buildMin(session.movies);
             cout << "Would you like more information about any of these movies? (Y/N)" << endl;
             cin >> data;
             if (data == "Y")
@@ -889,4 +999,5 @@ int main()
         cout << endl;
     }
     cout << "Thank you for using MovieNaviGator!" << endl;
+    return 0;
 };
