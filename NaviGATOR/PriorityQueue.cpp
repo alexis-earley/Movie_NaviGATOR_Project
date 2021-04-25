@@ -206,6 +206,73 @@ private:
 
     int current = 0;
 
+    string testQuotes(string &input)
+    { //constructor helper function; pops quotes from a string, if present
+        int lastChar = input.size() - 1;
+        string result;
+        if ((input[0] == '\"') && (input[lastChar] == '\"'))
+        {
+            return input.substr(1, lastChar - 1);
+        }
+        return input;
+    }
+
+    int intConv(string &input)
+    { //constructor helper function; converts string to integer, if possible
+        int result;
+        try
+        {
+            result = stoi(input);
+        }
+        catch (exception &err)
+        {
+            result = 0;
+        }
+        return result;
+    }
+
+    unordered_set<string> setConv(string input)
+    { //constructor helper function; breaks apart string by commas and places into an unordered set
+        unordered_set<string> result;
+        string currString = "";
+        for (int i = 0; i < input.size(); i++)
+        {
+            if (input[i] != ',')
+            {
+                currString += input[i];
+            }
+            else
+            {
+                result.insert(currString);
+                currString = "";
+                i++;
+            }
+        }
+        result.insert(currString);
+        return result;
+    }
+
+    vector<string> vectorConv(string input)
+    { //constructor helper function; breaks apart string by commas and places into a vector
+        vector<string> result;
+        string currString = "";
+        for (int i = 0; i < input.size(); i++)
+        {
+            if (input[i] != ',')
+            {
+                currString += input[i];
+            }
+            else
+            {
+                result.push_back(currString);
+                currString = "";
+                i++;
+            }
+        }
+        result.push_back(currString);
+        return result;
+    }
+
     // Recursive heapify-down algorithm.
     // The node at index `i` and its two direct children
     // violates the heap property
@@ -338,10 +405,11 @@ private:
     void show_max()
     {
         copy = max;
-        while (max.size() > 0)
+        while (number > 0)
         {
             cout << top_max()->title << ": " << top_max()->match << endl;
             pop_max();
+            number--;
         }
     }
 
@@ -378,9 +446,9 @@ private:
         return max.at(0); // or return max[0];
     }
 
-    void makeMatch(UnorderedMap &movies, string id)
+    void makeMatch(Movie *movie)
     {
-        movies.find(id)->match = ((double)rand() / (RAND_MAX));
+        movie->match = ((double)rand() / (RAND_MAX));
     }
 
     void buildMax()
@@ -481,13 +549,13 @@ public:
         actors = a;
     }
 
-    void buildMin(UnorderedMap &movies)
+    void buildMinMap(UnorderedMap &movies)
     {
         for (int i = 0; i < movies.table.size(); i++)
         {
             for (int j = 0; j < movies.table[i].size(); j++)
             {
-                makeMatch(movies, movies.table[i][j].first);
+                makeMatch(movies.table[i][j].second);
                 if (min.size() > number && movies.table[i][j].second->match < top_min()->match)
                 {
                     continue;
@@ -499,6 +567,70 @@ public:
                 };
             }
         }
+        cout << min.size() << endl;
+        buildMax();
+    }
+
+    void buildMinQueue()
+    {
+        string line;
+        vector<string> myString;
+        ifstream inFile;
+        inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_movies.tsv"); //first file; contains main movie data, but no detailed rating data, about 86k lines
+        if (inFile.is_open())
+        {
+            //pop heading
+            //cout << "file is open!" << endl;
+            getline(inFile, line);
+            getline(inFile, line);
+
+            string id; //holds movie ID, which the map is organized by
+
+            while (getline(inFile, line))
+            { //for each row in the data file
+                Movie *currMovie = new Movie();
+                istringstream ss(line);
+
+                string data;
+                getline(ss, data, '\t'); //gets the ID
+                id = data;
+                getline(ss, data, '\t'); //gets the title
+                currMovie->title = testQuotes(data);
+                getline(ss, data, '\t'); //gets the original title
+                currMovie->original_title = testQuotes(data);
+                getline(ss, data, '\t'); //gets the year
+                currMovie->year = intConv(data);
+                getline(ss, data, '\t'); //gets the date published
+                currMovie->date_published = data;
+                getline(ss, data, '\t'); //gets the genres
+                unordered_set<string> genres = setConv(testQuotes(data));
+                currMovie->genres = genres;
+
+                getline(ss, data, '\t'); //gets the duration
+                currMovie->duration = intConv(data);
+                getline(ss, data, '\t'); //gets the countries
+                currMovie->countries = setConv(testQuotes(data));
+                getline(ss, data, '\t'); //gets the languages
+                unordered_set<string> languages = setConv(testQuotes(data));
+                currMovie->languages = languages;
+
+                getline(ss, data, '\t'); //gets the directors
+                currMovie->directors = setConv(testQuotes(data));
+                getline(ss, data, '\t'); //gets the writers
+                currMovie->writers = setConv(testQuotes(data));
+                getline(ss, data, '\t'); //gets the production company
+                currMovie->production_company = data;
+                getline(ss, data, '\t'); //gets the actors
+                currMovie->actors = vectorConv(testQuotes(data));
+                getline(ss, data, '\t'); //gets the description
+                currMovie->description = testQuotes(data);
+
+                makeMatch(currMovie);
+                push_min(currMovie);
+            }
+        }
+        inFile.close();
+        cout << min.size() << endl;
         buildMax();
     }
 
@@ -844,6 +976,7 @@ int main()
     int number;
     int age;
     int gender;
+    int implementation;
 
     unordered_set<string> genres;
     vector<string> actors;
@@ -983,8 +1116,15 @@ int main()
             cout << "Enter number of recommendations" << endl;
             cin >> number;
             session.recommendations->setNumber(number);
+            cout << "Which implementation would you like?" << endl;
+            cout << "1. Unordered Map" << endl;
+            cout << "2. Priority Queue" << endl;
+            cin >> implementation;
             cout << "Your top " << number << " movies are:" << endl;
-            session.recommendations->buildMin(session.movies);
+            if (implementation == 1)
+                session.recommendations->buildMinMap(session.movies);
+            else
+                session.recommendations->buildMinQueue();
             cout << "Would you like more information about any of these movies? (Y/N)" << endl;
             cin >> data;
             if (data == "Y")
