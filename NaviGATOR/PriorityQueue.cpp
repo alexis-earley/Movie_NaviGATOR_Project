@@ -1,11 +1,12 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_set>
-#include <set>
 #include <unordered_map>
 #include <vector>
 #include <sstream>
 #include <string>
+#include <iomanip>
+#include <windows.h>
 using namespace std;
 
 class Movie
@@ -184,19 +185,16 @@ private:
 struct PriorityQueue
 {
 private:
-    // vector to store heap elements
+    // vectors to store heap elements
     vector<Movie *> min;
     vector<Movie *> max;
     vector<Movie *> copy;
-    //int size;
-    int capacity;
-
+    int number; //user input for number of reccomendations specifies size of min and max heap
+    //begin other user inputs for match preferences
     int duration;
     double rating;
-    int number;
     int age;
     int gender;
-
     unordered_set<string> genres;
     unordered_set<string> languages;
     unordered_set<string> countries;
@@ -204,10 +202,11 @@ private:
     unordered_set<string> writers;
     vector<string> actors;
 
-    int current = 0;
+    //int current = 0;
 
+    //same as for unordered map file parsing
     string testQuotes(string &input)
-    { //constructor helper function; pops quotes from a string, if present
+    { //buildMinQueue helper function; pops quotes from a string, if present
         int lastChar = input.size() - 1;
         string result;
         if ((input[0] == '\"') && (input[lastChar] == '\"'))
@@ -216,9 +215,9 @@ private:
         }
         return input;
     }
-
+    //same as for unordered map file parsing
     int intConv(string &input)
-    { //constructor helper function; converts string to integer, if possible
+    { //buildMinQueue helper function; converts string to integer, if possible
         int result;
         try
         {
@@ -230,9 +229,9 @@ private:
         }
         return result;
     }
-
+    //same as for unordered map file parsing
     unordered_set<string> setConv(string input)
-    { //constructor helper function; breaks apart string by commas and places into an unordered set
+    { //buildMinQueue helper function; breaks apart string by commas and places into an unordered set
         unordered_set<string> result;
         string currString = "";
         for (int i = 0; i < input.size(); i++)
@@ -251,9 +250,9 @@ private:
         result.insert(currString);
         return result;
     }
-
+    //same as for unordered map file parsing
     vector<string> vectorConv(string input)
-    { //constructor helper function; breaks apart string by commas and places into a vector
+    { //buildMinQueue helper function; breaks apart string by commas and places into a vector
         vector<string> result;
         string currString = "";
         for (int i = 0; i < input.size(); i++)
@@ -273,32 +272,24 @@ private:
         return result;
     }
 
-    // Recursive heapify-down algorithm.
-    // The node at index `i` and its two direct children
-    // violates the heap property
+    // Recursively sifts down through the max heap to ensure that the each node's children are smaller than the node, and if not, swapping them
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
     void heapify_down_max(int i)
     {
-        // get left and right child of node at index `i`
+        // get left and right child of node at index i (parent)
         int left = 2 * i + 1;
         int right = 2 * i + 2;
 
         int largest = i;
 
-        // compare `max[i]` with its left and right child
-        // and find the largest value
+        // compare the parent with its left and right child and find the index of the largest value
         if (left < max.size() && max[left]->match > max[i]->match)
-        {
             largest = left;
-        }
 
         if (right < max.size() && max[right]->match > max[largest]->match)
-        {
             largest = right;
-        }
 
-        // swap with max child having greater value and
-        // call heapify-down on the child
+        // if largest isn't the parent, swap with child having greater value and call heapify-down on the child
         if (largest != i)
         {
             swap(max[i], max[largest]);
@@ -306,14 +297,39 @@ private:
         }
     }
 
-    // Recursive heapify-up algorithm
+    // Recursively sifts down through the max heap to ensure that the each node's children are smaller than the node, and if not, swapping them
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void heapify_down_copy(int i)
+    {
+        // get left and right child of node at index i (parent)
+        int left = 2 * i + 1;
+        int right = 2 * i + 2;
+
+        int largest = i;
+
+        // compare the parent with its left and right child and find the index of the largest value
+        if (left < copy.size() && copy[left]->match > copy[i]->match)
+            largest = left;
+
+        if (right < copy.size() && copy[right]->match > copy[largest]->match)
+            largest = right;
+
+        // if largest isn't the parent, swap with child having greater value and call heapify-down on the child
+        if (largest != i)
+        {
+            swap(copy[i], copy[largest]);
+            heapify_down_copy(largest);
+        }
+    }
+
+    // Recursively sifts up through the max heap to ensure that the each node's children are smaller than the node, and if not, swapping them
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/https://www.techiedelight.com/min-heap-max-heap-implementation-c/
     void heapify_up_max(int i)
     {
-        // check if the node at index `i` and its parent violate the heap property
+        // check if the parent is smaller than the child
         if (i && max[(i - 1) / 2]->match < max[i]->match)
         {
-            // swap the two if heap property is violated
+            // swap the child and the parent
             swap(max[i], max[(i - 1) / 2]);
 
             // call heapify-up on the parent
@@ -321,32 +337,24 @@ private:
         }
     }
 
-    // Recursive heapify-down algorithm.
-    // The node at index `i` and its two direct children
-    // violates the heap property
+    // Recursively sifts down through the min heap to ensure that the each node's children are larger than the node, and if not, swapping them
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
     void heapify_down_min(int i)
     {
-        // get left and right child of node at index `i`
+        // get the left and right child of node at index i (parent)
         int left = 2 * i + 1;
         int right = 2 * i + 2;
 
         int smallest = i;
 
-        // compare `min[i]` with its left and right child
-        // and find the smallest value
+        // compare the parent with its left and right child and find the smallest value
         if (left < min.size() && min[left]->match < min[i]->match)
-        {
             smallest = left;
-        }
 
         if (right < min.size() && min[right]->match < min[smallest]->match)
-        {
             smallest = right;
-        }
 
-        // swap with min child having lesser value and
-        // call heapify-down on the child
+        // if smallest isn't the parent, swap with child having smaller value and call heapify-down on the child
         if (smallest != i)
         {
             swap(min[i], min[smallest]);
@@ -354,14 +362,14 @@ private:
         }
     }
 
-    // Recursive heapify-up algorithm
+    // Recursively sifts up through the min heap to ensure that the each node's children are larger than the node, and if not, swapping them
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
     void heapify_up_min(int i)
     {
-        // check if the node at index `i` and its parent violate the heap property
+        // check if the parent is larger than the child
         if (i && min[(i - 1) / 2]->match > min[i]->match)
         {
-            // swap the two if heap property is violated
+            // swap the child and the parent
             swap(min[i], min[(i - 1) / 2]);
 
             // call heapify-up on the parent
@@ -369,24 +377,23 @@ private:
         }
     }
 
-    // insert key into the heap
+    // insert Movie into the min heap
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
-    void push_min(Movie *key)
+    void push_min(Movie *m)
     {
-        // insert min new element at the end of the vector
-        min.push_back(key);
+        // insert new Movie at the end of the vector
+        min.push_back(m);
 
         // get element index and call heapify-up procedure
         int index = min.size() - 1;
         heapify_up_min(index);
     }
 
-    // Function to remove an element with the lowest priority (present at the root)
+    // Function to remove the Movie with the lowest match score (present at the root or index = 0)
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
     void pop_min()
     {
-        // replace the root of the heap with the last element
-        // of the vector
+        // replace the root of the heap with the last element of the vector
         min[0] = min.back();
         min.pop_back();
 
@@ -394,30 +401,32 @@ private:
         heapify_down_min(0);
     }
 
-    // Function to return an element with the lowest priority (present at the root)
+    // Function to return the Movie with the lowest match score (present at the root or index = 0)
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
-    Movie *top_min()
+    /*Movie *top_min()
     {
-        // otherwise, return the top_min (first) element
-        return min.at(0); // or return min[0];
-    }
+        // return the first element of the min vector
+        return min[0];
+    }*/
 
     void show_max()
     {
-        copy = max;
-        while (number > 0)
+        copy = max;  
+        int i = 1;      //create copy of max heap to use in printMovieInfo function (so that we are not trying to iterate through an empty vector)
+        while (number > 0) //return the top 'number' movies in the max heap (number is user input)
         {
-            cout << top_max()->title << ": " << top_max()->match << endl;
+            cout << i << ". " << max[0]->title << ": " << max[0]->match << endl;
             pop_max();
             number--;
+            i++;
         }
     }
 
-    // insert key into the heap
+    // insert Movie into the max heap
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
     void push_max(Movie *key)
     {
-        // insert max new element at the end of the vector
+        // insert new Movie at the end of the vector
         max.push_back(key);
 
         // get element index and call heapify-up procedure
@@ -425,12 +434,11 @@ private:
         heapify_up_max(index);
     }
 
-    // Function to remove an element with the highest priority (present at the root)
+    // Function to remove the Movie with the highest match score (present at the root or index = 0)
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
     void pop_max()
     {
-        // replace the root of the heap with the last element
-        // of the vector
+        // replace the root of the heap with the last element of the vector
         max[0] = max.back();
         max.pop_back();
 
@@ -438,13 +446,25 @@ private:
         heapify_down_max(0);
     }
 
-    // Function to return an element with the highest priority (present at the root)
+    // Function to remove the Movie with the highest match score (present at the root or index = 0)
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
-    Movie *top_max()
+    void pop_copy()
     {
-        // otherwise, return the top (first) element
-        return max.at(0); // or return max[0];
+        // replace the root of the heap with the last element of the vector
+        copy[0] = copy.back();
+        copy.pop_back();
+
+        // call heapify-down on the root node
+        heapify_down_copy(0);
     }
+
+    // Function to return the Movie with the highest match score (present at the root or index = 0)
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    /*Movie *top_max()
+    {
+        // return the first element of the max vector
+        return max[0];
+    }*/
 
     void makeMatch(Movie *movie)
     {
@@ -455,7 +475,7 @@ private:
     {
         while (min.size() > 0)
         {
-            push_max(top_min());
+            push_max(min[0]);
             pop_min();
         }
         show_max();
@@ -463,91 +483,62 @@ private:
 
     Movie *find(string title)
     {
-        bool found = false;
         for (Movie *m : copy)
         {
             if (m->title == title)
-            {
-                found = true;
                 return m;
-            }
         }
         return nullptr;
     }
 
 public:
+    //Constructor initializes class variables (user preferences) to default values
     PriorityQueue()
     {
-        //size = 0;
-        capacity = 100;
-
         duration = 0;
         rating = 0.0;
         number = 0;
         age = 0;
         gender = 0;
     }
-
+    //Destructor clears both the min and max heaps
     ~PriorityQueue()
-    { //destructor
+    {
         min.clear();
         max.clear();
     }
+    //Redefine class variable per user input
+    void setDuration(int d) { duration = d; }
 
-    void setDuration(int d)
-    {
-        duration = d;
-    }
+    //Redefine class variable per user input
+    void setRating(double r) { rating = r; }
 
-    void setRating(double r)
-    {
-        rating = r;
-    }
+    //Redefine class variable per user input
+    void setNumber(int n) { number = n; }
 
-    void setNumber(int n)
-    {
-        number = n;
-    }
+    //Redefine class variable per user input
+    void setAge(int a) { age = a; }
 
-    void setAge(int a)
-    {
-        age = a;
-    }
+    //Redefine class variable per user input
+    void setGender(int g) { gender = g; }
 
-    void setGender(int g)
-    {
-        gender = g;
-    }
+    //Redefine class variable per user input
+    void setGenres(unordered_set<string> g) { genres = g; }
 
-    void setGenres(unordered_set<string> g)
-    {
-        genres = g;
-    }
+    //Redefine class variable per user input
+    void setLanguages(unordered_set<string> l) { languages = l; }
 
-    void setLanguages(unordered_set<string> l)
-    {
-        languages = l;
-    }
+    //Redefine class variable per user input
+    void setCountries(unordered_set<string> c) { countries = c; }
 
-    void setCountries(unordered_set<string> c)
-    {
-        countries = c;
-    }
+    //Redefine class variable per user input
+    void setDirectors(unordered_set<string> d) { directors = d; }
 
-    void setDirectors(unordered_set<string> d)
-    {
-        directors = d;
-    }
+    //Redefine class variable per user input
+    void setWriters(unordered_set<string> w) { writers = w; }
 
-    void setWriters(unordered_set<string> w)
-    {
-        writers = w;
-    }
-
-    void setActors(vector<string> a)
-    {
-        actors = a;
-    }
+    //Redefine class variable per user input
+    void setActors(vector<string> a) { actors = a; }
 
     void buildMinMap(UnorderedMap &movies)
     {
@@ -556,18 +547,13 @@ public:
             for (int j = 0; j < movies.table[i].size(); j++)
             {
                 makeMatch(movies.table[i][j].second);
-                if (min.size() > number && movies.table[i][j].second->match < top_min()->match)
-                {
+                if (min.size() > number && movies.table[i][j].second->match < min[0]->match)
                     continue;
-                }
                 push_min(movies.table[i][j].second);
                 if (min.size() > number)
-                {
                     pop_min();
-                };
             }
         }
-        cout << min.size() << endl;
         buildMax();
     }
 
@@ -580,7 +566,6 @@ public:
         if (inFile.is_open())
         {
             //pop heading
-            //cout << "file is open!" << endl;
             getline(inFile, line);
             getline(inFile, line);
 
@@ -630,52 +615,128 @@ public:
             }
         }
         inFile.close();
-        cout << min.size() << endl;
+        /*inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
+
+        if (inFile.is_open())
+        {
+            //pop heading
+            getline(inFile, line);
+            getline(inFile, line);
+
+            string id;    //holds movie ID, which the map is organized by
+            string data;  //holds various pieces of important data
+            string trash; //holds lines that are ignored
+
+            while (getline(inFile, line))
+            {
+                istringstream ss(line);
+
+                getline(ss, id, '\t');              //collect the ID for the current movie
+                Movie *currMovie = movies.find(id); //find the movie with this ID in the map
+
+                getline(ss, trash, '\t'); //trash the following line (irrelevant info)
+                getline(ss, data, '\t');  //collect number of votes across all ages and genders
+                currMovie->num_votes = floatConv(data);
+                getline(ss, data, '\t'); //collect total number of votes across all ages and genders
+                currMovie->avg_votes[0][0] = floatConv(data);
+
+                for (int i = 0; i < 11; i++)
+                { //ignore next 11 lines
+                    getline(ss, data, '\t');
+                }
+
+                //set data that includes both genders (not including what has already been set)
+                for (int i = 1; i < 5; i++)
+                {
+                    getline(ss, data, '\t');
+                    currMovie->avg_votes[0][i] = floatConv(data);
+                    getline(ss, trash, '\t');
+                }
+
+                //insert male then female data
+                for (int i = 1; i < 3; i++)
+                {
+                    for (int j = 0; j < 5; j++)
+                    {
+                        getline(ss, data, '\t');
+                        currMovie->avg_votes[i][j] = floatConv(data);
+                        getline(ss, trash, '\t');
+                    }
+                }
+            }
+        }
+        inFile.close();*/
         buildMax();
     }
 
-    void printMovieInfo(string title)
+    void printMovieInfo2(int index)
     {
-        cout << copy.size() << endl;
-        Movie *current = find(title);
-        if (!current)
+        Movie* current;
+        while (index > 0)
         {
-            cout << "Movie not found/recommended." << endl;
+            current = copy[0];
+            pop_copy();
+            index--;
         }
+        if (!current)
+            cout << "Movie not found/recommended." << endl;
         else
         {
+            cout << "----------------------------" << endl;
             cout << "Title: " << current->title << endl;
             cout << "Original Title: " << current->original_title << endl;
             cout << "Year: " << current->year << endl;
             cout << "Date Published: " << current->date_published << endl;
             cout << "Genres: ";
             printSet(current->genres);
-            cout << endl;
             cout << "Duration: " << current->duration << endl;
             cout << "Countries: ";
             printSet(current->countries);
-            cout << endl;
             cout << "Languages: ";
             printSet(current->languages);
-            cout << endl;
             cout << "Directors: ";
             printSet(current->directors);
-            cout << endl;
             cout << "Writers: ";
             printSet(current->writers);
-            cout << endl;
             cout << "Production Company: " << current->production_company << endl;
             cout << "Actors: ";
-            // Creating a iterator pointing to start of vector
-            vector<string>::iterator it = current->actors.begin();
-            // Iterate till the end of vector
-            while (it != current->actors.end())
-            {
-                // Print the element
-                cout << (*it) << ", ";
-                //Increment the iterator
-                it++;
-            }
+            for (string actor : current->actors)
+                cout << actor << ", ";
+            cout << endl;
+            cout << "Description: " << current->description << endl;
+            //cout << "Average Vote: " << current->avg_vote << endl;
+            //cout << "Votes: " << current->votes << endl;
+        }
+    }
+
+    void printMovieInfo(string title)
+    {
+        //cout << copy.size() << endl;
+        Movie *current = find(title);
+        if (!current)
+            cout << "Movie not found/recommended." << endl;
+        else
+        {
+            cout << "----------------------------" << endl;
+            cout << "Title: " << current->title << endl;
+            cout << "Original Title: " << current->original_title << endl;
+            cout << "Year: " << current->year << endl;
+            cout << "Date Published: " << current->date_published << endl;
+            cout << "Genres: ";
+            printSet(current->genres);
+            cout << "Duration: " << current->duration << endl;
+            cout << "Countries: ";
+            printSet(current->countries);
+            cout << "Languages: ";
+            printSet(current->languages);
+            cout << "Directors: ";
+            printSet(current->directors);
+            cout << "Writers: ";
+            printSet(current->writers);
+            cout << "Production Company: " << current->production_company << endl;
+            cout << "Actors: ";
+            for (string actor : current->actors)
+                cout << actor << ", ";
             cout << endl;
             cout << "Description: " << current->description << endl;
             //cout << "Average Vote: " << current->avg_vote << endl;
@@ -685,16 +746,9 @@ public:
 
     void printSet(unordered_set<string> temp)
     {
-        // Creating a iterator pointing to start of set
-        unordered_set<string>::iterator it = temp.begin();
-        // Iterate till the end of set
-        while (it != temp.end())
-        {
-            // Print the element
-            cout << (*it) << ", ";
-            //Increment the iterator
-            it++;
-        }
+        for (string t : temp)
+            cout << t << ", ";
+        cout << endl;
     }
 };
 
@@ -714,7 +768,6 @@ public:
         if (inFile.is_open())
         {
             //pop heading
-            //cout << "file is open!" << endl;
             getline(inFile, line);
             getline(inFile, line);
 
@@ -967,8 +1020,13 @@ private:
 
 int main()
 {
-    MovieNaviGator session;
-    cout << "Welcome to MovieNaviGator!" << endl;
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    cout << "----------------------------" << endl;
+    SetConsoleTextAttribute(hConsole, 9);
+    cout << "*Welcome to MovieNaviGator!*" << endl;
+    SetConsoleTextAttribute(hConsole, 15);
+    cout << "----------------------------" << endl;
 
     int n = 1;
     int duration;
@@ -984,28 +1042,40 @@ int main()
     unordered_set<string> countries;
     unordered_set<string> directors;
     unordered_set<string> writers;
+
+    MovieNaviGator session;
+    
     while (n <= 9 && n >= 1)
     {
         string data;
+        int dataNum;
+        SetConsoleTextAttribute(hConsole, 9);
         cout << "Menu:" << endl;
-        cout << "1. Select preferred languages (e.g. English)" << endl;
-        cout << "2. Select preferred genres (e.g. Action)" << endl;
-        cout << "3. Select preferred duration in minutes (e.g. 120)" << endl;
-        cout << "4. Select preferred actors/actresses (e.g. George Clooney)" << endl;
-        cout << "5. Select preferred ranking (e.g. 7.5)" << endl;
-        cout << "6. Select preferred countries (e.g. India)" << endl;
-        cout << "7. Select preferred directors (e.g. Steven Spielberg)" << endl;
-        cout << "8. Select preferred writers (e.g. Quentin Tarantino)" << endl;
+        SetConsoleTextAttribute(hConsole, 15);
+        cout << "1. Enter preferred languages (e.g. English)" << endl;
+        cout << "2. Enter preferred genres (e.g. Action)" << endl;
+        cout << "3. Enter preferred duration in minutes (e.g. 120)" << endl;
+        cout << "4. Enter preferred actors/actresses (e.g. George Clooney)" << endl;
+        cout << "5. Enter preferred ranking (e.g. 7.5)" << endl;
+        cout << "6. Enter preferred countries (e.g. India)" << endl;
+        cout << "7. Enter preferred directors (e.g. Steven Spielberg)" << endl;
+        cout << "8. Enter preferred writers (e.g. Quentin Tarantino)" << endl;
         cout << "9. Recommend movies" << endl;
         cout << "10. Exit" << endl;
+        cout << "----------------------------" << endl;
+        SetConsoleTextAttribute(hConsole, 9);
         cout << "Please enter a menu option (e.g. 3)" << endl;
+        SetConsoleTextAttribute(hConsole, 15);
+        cout << "Your choice : ";
         cin >> n;
         if (n == 1)
         {
             cin.ignore();
             cout << "Top 10 Most Prevalent Languages in Database" << endl;
             session.displayLangs();
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred language (e.g. English)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string language;
@@ -1022,7 +1092,9 @@ int main()
             cin.ignore();
             cout << "All Genres in Database" << endl;
             session.displayGenres();
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred genre (e.g. Action)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string genre;
@@ -1037,86 +1109,114 @@ int main()
         else if (n == 3)
         {
             cout << "Range of durations (in minutes) in database: 40 - 800" << endl;
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred duration in minutes (e.g. 120)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> duration;
             session.recommendations->setDuration(duration);
         }
         else if (n == 4)
         {
             cin.ignore();
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred main actor/actress (e.g. George Clooney)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string actor;
             while (getline(ss, actor, ','))
+            {
                 if (actor[0] == ' ')
                     actor.erase(0, 1);
-            actors.push_back(actor);
+                actors.push_back(actor);
+            }
             session.recommendations->setActors(actors);
         }
         else if (n == 5)
         {
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Which age group do you fall into?" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             cout << "1. 0-18 years" << endl;
             cout << "2. 19-30 years" << endl;
             cout << "3. 31-45 years" << endl;
             cout << "4. 46+ years" << endl;
             cin >> age;
             session.recommendations->setAge(age);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "What gender are you?" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             cout << "1. Female" << endl;
             cout << "2. Male" << endl;
             cin >> gender;
             session.recommendations->setGender(gender);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred ranking (e.g. 7.5)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> rating;
             session.recommendations->setRating(rating);
         }
         else if (n == 6)
         {
             cin.ignore();
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred countries (e.g. India)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string country;
             while (getline(ss, country, ','))
+            {
                 if (country[0] == ' ')
                     country.erase(0, 1);
-            countries.insert(country);
+                countries.insert(country);
+            }
             session.recommendations->setCountries(countries);
         }
         else if (n == 7)
         {
             cin.ignore();
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred directors (e.g. Steven Spielberg)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string director;
             while (getline(ss, director, ','))
+            {
                 if (director[0] == ' ')
                     director.erase(0, 1);
-            directors.insert(director);
+                directors.insert(director);
+            }
             session.recommendations->setDirectors(directors);
         }
         else if (n == 8)
         {
             cin.ignore();
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred writers (e.g. Quentin Tarantino)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string writer;
             while (getline(ss, writer, ','))
+            {
                 if (writer[0] == ' ')
                     writer.erase(0, 1);
-            writers.insert(writer);
+                writers.insert(writer);
+            }
             session.recommendations->setWriters(writers);
         }
         else if (n == 9)
         {
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter number of recommendations" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> number;
             session.recommendations->setNumber(number);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Which implementation would you like?" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             cout << "1. Unordered Map" << endl;
             cout << "2. Priority Queue" << endl;
             cin >> implementation;
@@ -1125,19 +1225,28 @@ int main()
                 session.recommendations->buildMinMap(session.movies);
             else
                 session.recommendations->buildMinQueue();
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Would you like more information about any of these movies? (Y/N)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> data;
             if (data == "Y")
             {
                 cin.ignore();
-                cout << "Which of the above movies would you like more information on?" << endl;
-                getline(cin, data);
-                cout << data << endl;
-                session.recommendations->printMovieInfo(data);
+                SetConsoleTextAttribute(hConsole, 9);
+                //cout << "Which of the above movies would you like more information on?" << endl;
+                cout << "Which of the above movies would you like more information on? (1, 2, etc.)" << endl;
+                SetConsoleTextAttribute(hConsole, 15);
+                //getline(cin, data);
+                cin >> dataNum;
+                //cout << data << endl;
+                //session.recommendations->printMovieInfo(data);
+                session.recommendations->printMovieInfo2(dataNum);
             }
         }
         cout << endl;
     }
+    SetConsoleTextAttribute(hConsole, 9);
     cout << "Thank you for using MovieNaviGator!" << endl;
+    SetConsoleTextAttribute(hConsole, 15);
     return 0;
 };
