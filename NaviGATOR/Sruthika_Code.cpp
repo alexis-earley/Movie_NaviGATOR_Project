@@ -916,20 +916,19 @@ public:
             {
                 cout << "----------------------------" << endl;
                 cout << "Title: " << current->title << endl;
-                //cout << "Original Title: " << current->original_title << endl;
                 cout << "Year: " << current->year << endl;
                 cout << "Date Published: " << current->date_published << endl;
                 cout << "Genres: ";
-                printSet(current->genres, current->genres.size() - 1);
+                printSet(current->genres);
                 cout << "Duration: " << current->duration << endl;
                 cout << "Countries: ";
-                printSet(current->countries, current->countries.size() - 1);
+                printSet(current->countries);
                 cout << "Languages: ";
-                printSet(current->languages, current->languages.size() - 1);
+                printSet(current->languages);
                 cout << "Directors: ";
-                printSet(current->directors, current->directors.size() - 1);
+                printSet(current->directors);
                 cout << "Writers: ";
-                printSet(current->writers, current->writers.size() - 1);
+                printSet(current->writers);
                 cout << "Production Company: " << current->production_company << endl;
                 cout << "Actors: ";
                 int actorsSize = current->actors.size();
@@ -945,7 +944,7 @@ public:
         }
     }
 
-    void printSet(unordered_set<string> temp, int length)
+    void printSet(unordered_set<string> temp)
     {
         for (auto itr = temp.begin(); itr != temp.end();)
         {
