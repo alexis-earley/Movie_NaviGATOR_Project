@@ -1259,7 +1259,7 @@ int main()
         cout << "2. Enter preferred genres (e.g. Action)" << endl;
         cout << "3. Enter maximum duration in minutes (e.g. 120)" << endl;
         cout << "4. Enter preferred actors/actresses (e.g. George Clooney)" << endl;
-        cout << "5. Enter preferred ranking (e.g. 7.5)" << endl;
+        cout << "5. Enter preferred age/gender" << endl;
         cout << "6. Enter preferred countries (e.g. USA)" << endl;
         cout << "7. Enter preferred directors (e.g. Steven Spielberg)" << endl;
         cout << "8. Enter preferred writers (e.g. Quentin Tarantino)" << endl;
