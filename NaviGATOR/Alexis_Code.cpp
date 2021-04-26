@@ -35,6 +35,7 @@ public:
     Movie()
     { //default constructor
         id = "";
+        match = 0;
         title = "";
         original_title = "";
         year = 0;
@@ -48,6 +49,213 @@ public:
             for (int j = 0; j < 5; j++)
             {
                 avg_votes[i][j] = 0;
+            }
+        }
+    }
+    double totalscorecalc(double myear, double mgenre, double mdura, double mcoun, double mdirec, double mwriters, double mprodu, double mactors, double mlang, double mrating)
+    {
+        double votes = this->num_votes;
+        double newyear = 0.0, newgenre = 0.0, newdura = 0.0, newcoun = 0.0, newdirec = 0.0, newwriters = 0.0, newprodu = 0.0, newactors = 0.0, newlang = 0.0, newrating = 0.0, newnumvotes = 0.0;
+        double percentage = (100.0 / 13.0) / 100.0; // finds percentage for all preferences
+        unordered_set<string>::iterator itr;
+        double countlang = 0.0, countgenre = 0.0, countcoun = 0.0, countdirec = 0.0, countwriters = 0.0, countactors = 0.0;
+        for (itr = this->languages.begin(); itr != this->languages.end(); itr++)
+        { // count languages of movie
+            countlang++;
+        }
+        for (itr = this->genres.begin(); itr != this->genres.end(); itr++)
+        { // count genres of movie
+            countgenre++;
+        }
+        for (itr = this->countries.begin(); itr != this->countries.end(); itr++)
+        { // count countries of movie
+            countcoun++;
+        }
+        for (itr = this->directors.begin(); itr != this->directors.end(); itr++)
+        { // count directors of movie
+            countdirec++;
+        }
+        for (itr = this->writers.begin(); itr != this->writers.end(); itr++)
+        { // count writers of movie
+            countwriters++;
+        }
+        for (auto itr : this->actors)
+        { // count actors of movie
+            countactors++;
+        }
+
+        // the next statements calculate and return the match score in a range from 0 to 1, 1 being the best match and 0 being the worst match
+        // these calculations are done by dividing the match score calculated in matchifelse() by the number of languages so that a movie with several languages is not accounted for several times
+        // then, the match score is divided by the number of items in the movie and later multiplied by the percentage so that they all add up to a number less than or equal to 1
+        if (myear != 0.0) // change other factors to account for how many actually match (if all match, better score)
+            newyear = (myear / myear) * percentage;
+        if (mgenre != 0.0)
+            newgenre = ((mgenre / countlang) / countgenre) * percentage;
+        if (mdura != 0.0)
+            newdura = (mdura / countlang) * percentage; // divided by number of languages so that the duration is not added by the number of languages (just one duration per movie)
+        if (mcoun != 0.0)
+            newcoun = ((mcoun / countlang) / countcoun) * percentage;
+        if (mdirec != 0.0)
+            newdirec = ((mdirec / countlang) / countdirec) * percentage;
+        if (mwriters != 0.0)
+            newwriters = ((mwriters / countlang) / countwriters) * percentage;
+        if (mprodu != 0.0)
+            newprodu = (mprodu / mprodu) * percentage;
+        if (mactors != 0.0)
+            newactors = ((mactors / countlang) / countactors) * percentage;
+        if (mlang != 0.0)
+            newlang = (mlang / countlang) * percentage;
+        if (mrating != 0.0)                                       // rating is given the most weight in the match score calculation so it is multiplied by 3
+            newrating = ((mrating / countlang) * percentage) * 1; // divided by number of languages so that the duration is not added by the number of languages (just one duration per movie)
+        if (votes >= 0.0 && votes < 10000.0)
+            newnumvotes += 0.1 * percentage;
+        if (votes >= 10000.0 && votes < 100000.0)
+            newnumvotes += 0.5 * percentage;
+        if (votes >= 100000.0)
+            newnumvotes += 1.0 * percentage;
+
+        double totalscore = (newyear + newgenre + newdura + newcoun + newdirec + newwriters + newprodu + newactors + newlang + newrating + newnumvotes);
+
+        return totalscore;
+    }
+    double matchscore(int _yearmax, int _yearmin, unordered_set<string> _genre, int _duration, unordered_set<string> _countries, unordered_set<string> _languages, unordered_set<string> _directors, unordered_set<string> _writers, string _production_company, vector<string> _actor, int _age, int _gender)
+    {
+        double myear = 0.0, mgenre = 0.0, mdura = 0.0, mcoun = 0.0, mlang = 0.0, mdirec = 0.0, mwriters = 0.0, mprodu = 0.0, mactors = 0.0, mrating = 0.0;
+        unordered_set<string> mySet = this->languages, mySet2 = this->genres, mySet3 = this->directors, mySet4 = this->writers, mySet5 = this->countries;
+
+        for (auto i : _languages)
+        { // languages
+            if (i != "")
+            {
+                if (mySet.find(i) != mySet.end())
+                { // iterate through set of languages
+                    mlang++;
+                    matchesifelse(_yearmax, _yearmin, _genre, _duration, _countries, _languages, _directors, _writers, _production_company, _actor, _age, _gender, myear, mgenre, mdura, mcoun, mdirec, mwriters, mprodu, mactors, mrating, mySet, mySet2, mySet3, mySet4, mySet5); // calculates match scores for every preference
+                }
+            }
+            else // if no languages specified
+                matchesifelse(_yearmax, _yearmin, _genre, _duration, _countries, _languages, _directors, _writers, _production_company, _actor, _age, _gender, myear, mgenre, mdura, mcoun, mdirec, mwriters, mprodu, mactors, mrating, mySet, mySet2, mySet3, mySet4, mySet5);
+        }
+        return totalscorecalc(myear, mgenre, mdura, mcoun, mdirec, mwriters, mprodu, mactors, mlang, mrating); // calculates total match score in range 0 to 1
+    }
+
+    void matchesifelse(int _yearmax, int _yearmin, unordered_set<string> _genre, int _duration, unordered_set<string> _countries, unordered_set<string> _languages, unordered_set<string> _directors, unordered_set<string> _writers, string _production_company, vector<string> _actor, int _age, int _gender, double &myear, double &mgenre, double &mdura, double &mcoun, double &mdirec, double &mwriters, double &mprodu, double &mactors, double &mrating, unordered_set<string> mySet, unordered_set<string> mySet2, unordered_set<string> mySet3, unordered_set<string> mySet4, unordered_set<string> mySet5)
+    {
+        for (auto j : _genre) // genre
+        {
+            if (mySet2.find(j) != mySet2.end())
+            {
+                mgenre++;
+            }
+        }
+        if (this->year <= _yearmax && this->year > _yearmin)
+        { // year
+            myear++;
+        }
+        if (this->duration <= _duration)
+        { // duration
+            mdura += ((double)this->duration) / (_duration);
+        }
+        for (auto k : _countries) //countries
+        {
+            if (mySet5.find(k) != mySet5.end())
+            {
+                mcoun++;
+            }
+        }
+        for (auto l : _directors) //directors
+        {
+            if (mySet3.find(l) != mySet3.end())
+            {
+                mdirec++;
+            }
+        }
+        for (auto m : _writers) //writers
+        {
+            if (mySet4.find(m) != mySet4.end())
+            {
+                mwriters++;
+            }
+        }
+        if (this->production_company == _production_company) //production company
+            mprodu++;
+        for (int i = 0; i < this->actors.size(); i++) // actors
+        {
+            for (int j = 0; j < _actor.size(); j++)
+            {
+                if (this->actors.at(i) == _actor.at(j))
+                {
+                    mactors++;
+                }
+            }
+        }
+        if (_gender == 1) // male
+        {
+            if (_age == 1) // 18 under
+            {
+                mrating += this->avg_votes[1][1] / 10.0;
+            }
+            else if (_age == 2) // 18-30
+            {
+                mrating += this->avg_votes[1][2] / 10.0;
+            }
+            else if (_age == 3) // 30-45
+            {
+                mrating += this->avg_votes[1][3] / 10.0;
+            }
+            else if (_age == 4) // 45+ under
+            {
+                mrating += this->avg_votes[1][4] / 10.0;
+            }
+            else // either, if inputted empty string or number other than 1,
+            {
+                mrating += this->avg_votes[1][0] / 10.0;
+            }
+        }
+        else if (_gender == 2) // female
+        {
+            if (_age == 1) // 18 under
+            {
+                mrating += this->avg_votes[2][1] / 10.0;
+            }
+            else if (_age == 2) // 18-30
+            {
+                mrating += this->avg_votes[2][2] / 10.0;
+            }
+            else if (_age == 3) // 30-45
+            {
+                mrating += this->avg_votes[2][3] / 10.0;
+            }
+            else if (_age == 4) // 45+ under
+            {
+                mrating += this->avg_votes[2][4] / 10.0;
+            }
+            else // either
+            {
+                mrating += this->avg_votes[2][0] / 10.0;
+            }
+        }
+        else // either
+        {
+            if (_age == 1) // 18 under
+            {
+                mrating += this->avg_votes[0][1] / 10.0;
+            }
+            else if (_age == 2) // 18-30
+            {
+                mrating += this->avg_votes[0][2] / 10.0;
+            }
+            else if (_age == 3) // 30-45
+            {
+                mrating += this->avg_votes[0][3] / 10.0;
+            }
+            else if (_age == 4) // 45+ under
+            {
+                mrating += this->avg_votes[0][4] / 10.0;
+            }
+            else // either
+            {
+                mrating += this->avg_votes[0][0] / 10.0;
             }
         }
     }
@@ -206,8 +414,6 @@ private:
     unordered_set<string> directors;
     unordered_set<string> writers;
     vector<string> actors;
-
-    //int current = 0;
 
     //same as for unordered map file parsing
     string testQuotes(string &input)
@@ -420,32 +626,6 @@ private:
         heapify_down_min(0);
     }
 
-    void show_max()
-    {
-        //cout << "showing max heap!" << endl;
-        copy = max;
-        int i = 1;         //create copy of max heap to use in printMovieInfo function (so that we are not trying to iterate through an empty vector)
-        while (number > 0) //return the top 'number' movies in the max heap (number is user input)
-        {
-            cout << i << ". " << max[0]->title << ": " << max[0]->match << endl;
-            pop_max();
-            number--;
-            i++;
-        }
-    }
-
-    // insert Movie into the max heap
-    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
-    void push_max(Movie *key)
-    {
-        // insert new Movie at the end of the vector
-        max.push_back(key);
-
-        // get element index and call heapify-up procedure
-        int index = max.size() - 1;
-        heapify_up_max(index);
-    }
-
     // Function to remove the Movie with the highest match score (present at the root or index = 0)
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
     void pop_max()
@@ -470,216 +650,6 @@ private:
         heapify_down_copy(0);
     }
 
-    double totalscorecalc(Movie *movie, double myear, double mgenre, double mdura, double mcoun, double mdirec, double mwriters, double mprodu, double mactors, double mlang, double mrating)
-    {
-        double votes = movie->num_votes;
-        double newyear = 0.0, newgenre = 0.0, newdura = 0.0, newcoun = 0.0, newdirec = 0.0, newwriters = 0.0, newprodu = 0.0, newactors = 0.0, newlang = 0.0, newrating = 0.0, newnumvotes = 0.0;
-        double percentage = (100.0 / 11.0) / 100.0; // finds percentage for all preferences
-        unordered_set<string>::iterator itr;
-        double countlang = 0.0, countgenre = 0.0, countcoun = 0.0, countdirec = 0.0, countwriters = 0.0, countactors = 0.0;
-        for (itr = movie->languages.begin(); itr != movie->languages.end(); itr++)
-        { // count languages of movie
-            countlang++;
-        }
-        for (itr = movie->genres.begin(); itr != movie->genres.end(); itr++)
-        { // count genres of movie
-            countgenre++;
-        }
-        for (itr = movie->countries.begin(); itr != movie->countries.end(); itr++)
-        { // count countries of movie
-            countcoun++;
-        }
-        for (itr = movie->directors.begin(); itr != movie->directors.end(); itr++)
-        { // count directors of movie
-            countdirec++;
-        }
-        for (itr = movie->writers.begin(); itr != movie->writers.end(); itr++)
-        { // count writers of movie
-            countwriters++;
-        }
-        for (auto itr : movie->actors)
-        { // count actors of movie
-            countactors++;
-        }
-
-        // the next statements calculate and return the match score in a range from 0 to 1, 1 being the best match and 0 being the worst match
-        // these calculations are done by dividing the match score calculated in matchifelse() by the number of languages so that a movie with several languages is not accounted for several times
-        // then, the match score is divided by the number of items in the movie and later multiplied by the percentage so that they all add up to a number less than or equal to 1
-        if (myear != 0.0) // change other factors to account for how many actually match (if all match, better score)
-            newyear = (myear / myear) * percentage;
-        if (mgenre != 0.0)
-            newgenre = ((mgenre / countlang) / countgenre) * percentage;
-        if (mdura != 0.0)
-            newdura = (mdura / countlang) * percentage; // divided by number of languages so that the duration is not added by the number of languages (just one duration per movie)
-        if (mcoun != 0.0)
-            newcoun = ((mcoun / countlang) / countcoun) * percentage;
-        if (mdirec != 0.0)
-            newdirec = ((mdirec / countlang) / countdirec) * percentage;
-        if (mwriters != 0.0)
-            newwriters = ((mwriters / countlang) / countwriters) * percentage;
-        if (mprodu != 0.0)
-            newprodu = (mprodu / mprodu) * percentage;
-        if (mactors != 0.0)
-            newactors = ((mactors / countlang) / countactors) * percentage;
-        if (mlang != 0.0)
-            newlang = (mlang / countlang) * percentage;
-        if (mrating != 0.0)                                       // rating is given the most weight in the match score calculation so it is multiplied by 3
-            newrating = ((mrating / countlang) * percentage); // divided by number of languages so that the duration is not added by the number of languages (just one duration per movie)
-        if (mlang != 0) {
-            if (votes >= 0.0 && votes < 10000.0)
-                newnumvotes += 0.1 * percentage;
-            if (votes >= 10000.0 && votes < 100000.0)
-                newnumvotes += 0.5 * percentage;
-            if (votes >= 100000.0)
-                newnumvotes += 1.0 * percentage;
-        }
-
-        double totalscore = (newyear + newgenre + newdura + newcoun + newdirec + newwriters + newprodu + newactors + newlang + newrating + newnumvotes);
-
-        return totalscore;
-    }
-    double matchscore(Movie *_movie, int _yearmax, int _yearmin, unordered_set<string> _genre, int _duration, unordered_set<string> _countries, unordered_set<string> _languages, unordered_set<string> _directors, unordered_set<string> _writers, string _production_company, vector<string> _actor, int _age, int _gender)
-    {
-        double myear = 0.0, mgenre = 0.0, mdura = 0.0, mcoun = 0.0, mlang = 0.0, mdirec = 0.0, mwriters = 0.0, mprodu = 0.0, mactors = 0.0, mrating = 0.0;
-        unordered_set<string> mySet = _movie->languages, mySet2 = _movie->genres, mySet3 = _movie->directors, mySet4 = _movie->writers, mySet5 = _movie->countries;
-
-        for (auto i : _languages)
-        { // languages
-            if (i != "")
-            {
-                if (mySet.find(i) != mySet.end())
-                { // iterate through set of languages
-                    mlang++;
-                    matchesifelse(_movie, _yearmax, _yearmin, _genre, _duration, _countries, _languages, _directors, _writers, _production_company, _actor, _age, _gender, myear, mgenre, mdura, mcoun, mdirec, mwriters, mprodu, mactors, mrating, mySet, mySet2, mySet3, mySet4, mySet5); // calculates match scores for every preference
-                }
-            }
-            else // if no languages specified
-                matchesifelse(_movie, _yearmax, _yearmin, _genre, _duration, _countries, _languages, _directors, _writers, _production_company, _actor, _age, _gender, myear, mgenre, mdura, mcoun, mdirec, mwriters, mprodu, mactors, mrating, mySet, mySet2, mySet3, mySet4, mySet5);
-        }
-        return totalscorecalc(_movie, myear, mgenre, mdura, mcoun, mdirec, mwriters, mprodu, mactors, mlang, mrating); // calculates total match score in range 0 to 1
-    }
-
-    void matchesifelse(Movie *_movie, int _yearmax, int _yearmin, unordered_set<string> _genre, int _duration, unordered_set<string> _countries, unordered_set<string> _languages, unordered_set<string> _directors, unordered_set<string> _writers, string _production_company, vector<string> _actor, int _age, int _gender, double &myear, double &mgenre, double &mdura, double &mcoun, double &mdirec, double &mwriters, double &mprodu, double &mactors, double &mrating, unordered_set<string> mySet, unordered_set<string> mySet2, unordered_set<string> mySet3, unordered_set<string> mySet4, unordered_set<string> mySet5)
-    {
-        for (auto j : _genre) // genre
-        {
-            if (mySet2.find(j) != mySet2.end())
-            {
-                mgenre++;
-            }
-        }
-        if (_movie->year <= _yearmax && _movie->year > _yearmin)
-        { // year
-            myear++;
-        }
-        if (_movie->duration <= _duration)
-        { // duration
-            mdura += ((double)_movie->duration) / (_duration);
-        }
-        for (auto k : _countries) //countries
-        {
-            if (mySet5.find(k) != mySet5.end())
-            {
-                mcoun++;
-            }
-        }
-        for (auto l : _directors) //directors
-        {
-            if (mySet3.find(l) != mySet3.end())
-            {
-                mdirec++;
-            }
-        }
-        for (auto m : _writers) //writers
-        {
-            if (mySet4.find(m) != mySet4.end())
-            {
-                mwriters++;
-            }
-        }
-        if (_movie->production_company == _production_company) //production company
-            mprodu++;
-        for (int i = 0; i < _movie->actors.size(); i++) // actors
-        {
-            for (int j = 0; j < _actor.size(); j++)
-            {
-                if (_movie->actors.at(i) == _actor.at(j))
-                {
-                    mactors++;
-                }
-            }
-        }
-        if (_gender == 1) // male
-        {
-            if (_age == 1) // 18 under
-            {
-                mrating += _movie->avg_votes[1][1] / 10.0;
-            }
-            else if (_age == 2) // 18-30
-            {
-                mrating += _movie->avg_votes[1][2] / 10.0;
-            }
-            else if (_age == 3) // 30-45
-            {
-                mrating += _movie->avg_votes[1][3] / 10.0;
-            }
-            else if (_age == 4) // 45+ under
-            {
-                mrating += _movie->avg_votes[1][4] / 10.0;
-            }
-            else // either, if inputted empty string or number other than 1,
-            {
-                mrating += _movie->avg_votes[1][0] / 10.0;
-            }
-        }
-        else if (_gender == 2) // female
-        {
-            if (_age == 1) // 18 under
-            {
-                mrating += _movie->avg_votes[2][1] / 10.0;
-            }
-            else if (_age == 2) // 18-30
-            {
-                mrating += _movie->avg_votes[2][2] / 10.0;
-            }
-            else if (_age == 3) // 30-45
-            {
-                mrating += _movie->avg_votes[2][3] / 10.0;
-            }
-            else if (_age == 4) // 45+ under
-            {
-                mrating += _movie->avg_votes[2][4] / 10.0;
-            }
-            else // either
-            {
-                mrating += _movie->avg_votes[2][0] / 10.0;
-            }
-        }
-        else // either
-        {
-            if (_age == 1) // 18 under
-            {
-                mrating += _movie->avg_votes[0][1] / 10.0;
-            }
-            else if (_age == 2) // 18-30
-            {
-                mrating += _movie->avg_votes[0][2] / 10.0;
-            }
-            else if (_age == 3) // 30-45
-            {
-                mrating += _movie->avg_votes[0][3] / 10.0;
-            }
-            else if (_age == 4) // 45+ under
-            {
-                mrating += _movie->avg_votes[0][4] / 10.0;
-            }
-            else // either
-            {
-                mrating += _movie->avg_votes[0][0] / 10.0;
-            }
-        }
-    }
-
     void buildMax()
     {
         //cout << "building max!" << endl;
@@ -695,6 +665,8 @@ public:
     //Constructor initializes class variables (user preferences) to default values
     PriorityQueue()
     {
+        //number = 0;
+        number = 3;
         duration = 0;
         rating = 0.0;
         number = 0;
@@ -709,8 +681,14 @@ public:
         min.clear();
         max.clear();
     }
+
     //Redefine class variable per user input
-    void setDuration(int d) { duration = d; }
+    void setDuration(int d)
+    {
+        duration = d;
+        //cout << "duration!" << endl;
+        //cout << this->duration << endl;
+    }
 
     //Redefine class variable per user input
     void setYearMaxMin(int max, int min)
@@ -752,13 +730,39 @@ public:
     //Redefine class variable per user input
     void setActors(vector<string> a) { actors = a; }
 
+    // insert Movie into the max heap
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void push_max(Movie *key)
+    {
+        // insert new Movie at the end of the vector
+        max.push_back(key);
+
+        // get element index and call heapify-up procedure
+        int index = max.size() - 1;
+        heapify_up_max(index);
+    }
+
+    void show_max()
+    {
+        copy = max;
+        int i = 1;         //create copy of max heap to use in printMovieInfo function (so that we are not trying to iterate through an empty vector)
+        while (number > 0) //return the top 'number' movies in the max heap (number is user input)
+        {
+            cout << i << ". " << max[0]->title << ": " << max[0]->match << endl;
+            pop_max();
+            number--;
+            i++;
+        }
+    }
+
     void buildMinMap(UnorderedMap &movies)
     {
+        //cout << this->duration << endl;
         for (int i = 0; i < movies.table.size(); i++)
         {
             for (int j = 0; j < movies.table[i].size(); j++)
             {
-                movies.table[i][j].second->match = matchscore(movies.table[i][j].second, year_max, year_min, genres, duration, countries, languages, directors, writers, production_company, actors, age, gender); // calculate match score for each movie in unordered map
+                movies.table[i][j].second->match = movies.table[i][j].second->matchscore(this->year_max, this->year_min, this->genres, this->duration, this->countries, this->languages, this->directors, this->writers, this->production_company, this->actors, this->age, this->gender); // calculate match score for each movie in unordered map
                 if (min.size() > number && movies.table[i][j].second->match < min[0]->match)
                     continue;
                 push_min(movies.table[i][j].second);
@@ -777,13 +781,11 @@ public:
         inFile.open("imdb_movies.tsv"); //first file; contains main movie data, but no detailed rating data, about 86k lines
         if (inFile.is_open())
         {
-
             //pop heading
             getline(inFile, line);
             getline(inFile, line);
 
-            string id; //holds movie ID, which the map is organized by
-
+            string id;                            //holds movie ID, which the map is organized by
             const clock_t begin_time_1 = clock(); //start clock
 
             while (getline(inFile, line))
@@ -825,21 +827,24 @@ public:
                 getline(ss, data, '\t'); //gets the description
                 currMovie->description = testQuotes(data);
 
-                currMovie->match = matchscore(currMovie, year_max, year_min, genres, duration, countries, languages, directors, writers, production_company, actors, age, gender); // finds match score of movies
-                push_min(currMovie);
+                currMovie->match = currMovie->matchscore(this->year_max, this->year_min, this->genres, this->duration, this->countries, this->languages, this->directors, this->writers, this->production_company, this->actors, this->age, this->gender); // calculate match score for each movie in unordered map
+                push_max(currMovie);
             }
-            float resultTime = float(clock () - begin_time_1) /  CLOCKS_PER_SEC;
 
-            cout << "It took: " << resultTime << " seconds to parse through the first file, inserting data into the heap 85855 times." << endl;
+            float resultTime = float(clock() - begin_time_1) / CLOCKS_PER_SEC;
+
+            cout << "It took: " << resultTime << " seconds to parse through the first file, inserting data into the priority queue 85855 times." << endl;
         }
         inFile.close();
-        /*inFile.open("imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
+        inFile.open("imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
+
         if (inFile.is_open())
         {
             //pop heading
             //cout << "ratings is open!" << endl;
             getline(inFile, line);
             getline(inFile, line);
+
             string id;    //holds movie ID, which the map is organized by
             string data;  //holds various pieces of important data
             string trash; //holds lines that are ignored
@@ -849,20 +854,24 @@ public:
             while (getline(inFile, line))
             {
                 istringstream ss(line);
+
                 getline(ss, id, '\t'); //collect the ID for the current movie
                 //cout << id << endl;
                 Movie *currMovie = find(id); //find the movie with this ID in the map
                 //cout << currMovie->id << endl;
+
                 getline(ss, data, '\t'); //collect number of votes across all ages and genders
                 currMovie->num_votes = floatConv(data);
                 getline(ss, data, '\t'); //collect total number of votes across all ages and genders
                 currMovie->avg_votes[0][0] = floatConv(data);
+
                 //set data that includes both genders (not including what has already been set)
                 for (int i = 1; i < 5; i++)
                 {
                     getline(ss, data, '\t');
                     currMovie->avg_votes[0][i] = floatConv(data);
                 }
+
                 //insert male then female data
                 for (int i = 1; i < 3; i++)
                 {
@@ -873,14 +882,15 @@ public:
                     }
                 }
             }
-            float resultTime = float(clock () - begin_time_1) /  CLOCKS_PER_SEC;
+            float resultTime = float(clock() - begin_time_1) / CLOCKS_PER_SEC;
 
-            cout << "It took: " << resultTime << " seconds to parse through the second file, searching for data in the heap 85855 times." << endl;
+            cout << "It took: " << resultTime << " seconds to parse through the second file, searching for data in the priority queue 85855 times." << endl;
             cout << endl;
+            cout << "Your top movies are:" << endl;
         }
-
-        inFile.close();*/
-        buildMax();
+        inFile.close();
+        //buildMax();
+        show_max();
     }
 
     Movie *find(string id)
@@ -894,46 +904,6 @@ public:
         }
         return nullptr;
     }
-
-    /*void printMovieInfo2(int index)
-    {
-        Movie *current;
-        while (index > 0)
-        {
-            current = copy[0];
-            pop_copy();
-            index--;
-        }
-        if (!current)
-            cout << "Movie not found/recommended." << endl;
-        else
-        {
-            cout << "----------------------------" << endl;
-            cout << "Title: " << current->title << endl;
-            cout << "Original Title: " << current->original_title << endl;
-            cout << "Year: " << current->year << endl;
-            cout << "Date Published: " << current->date_published << endl;
-            cout << "Genres: ";
-            printSet(current->genres, current->genres.size() - 1);
-            cout << "Duration: " << current->duration << endl;
-            cout << "Countries: ";
-            printSet(current->countries, current->countries.size() - 1);
-            cout << "Languages: ";
-            printSet(current->languages, current->languages.size() - 1);
-            cout << "Directors: ";
-            printSet(current->directors, current->directors.size() - 1);
-            cout << "Writers: ";
-            printSet(current->writers, current->writers.size() - 1);
-            cout << "Production Company: " << current->production_company << endl;
-            cout << "Actors: ";
-            for (string actor : current->actors)
-                cout << actor << ", ";
-            cout << endl;
-            cout << "Description: " << current->description << endl;
-            //cout << "Average Vote: " << current->avg_vote << endl;
-            //cout << "Votes: " << current->votes << endl;
-        }
-    }*/
 
     void printMovieInfo3(vector<int> indices) //print multiple movies
     {
@@ -972,34 +942,19 @@ public:
                     cout << actor << ", ";
                 cout << endl;
                 cout << "Description: " << current->description << endl;
-                //cout << "Average Vote: " << current->avg_vote << endl;
-                //cout << "Votes: " << current->votes << endl;
             }
         }
     }
 
     void printSet(unordered_set<string> temp, int length)
     {
-        for (int i = 0; i < length; i++)
-        { //"length" number of contents should be printed
-            auto it = temp.begin();
-            cout << *it << endl;
-            it++;
-            //formatting
-            if (i < length - 1)
-            {
-                cout << ", ";
-            }
-            else
-            {
-                cout << endl;
-            }
-        }
+        for (string s : temp)
+            cout << s << ", ";
+        cout << endl;
     }
 
     void show_more()
     {
-        //cout << "showing max heap!" << endl;
         int n = 5;
         int i = 1;    //create copy of max heap to use in printMovieInfo function (so that we are not trying to iterate through an empty vector)
         while (n > 0) //return the top 'number' movies in the max heap (number is user input)
@@ -1016,9 +971,7 @@ class MovieNaviGator
 {
 public:
     UnorderedMap movies = UnorderedMap(110000); //holds each movie, with the key being the movie ID
-    PriorityQueue *recommendations = new PriorityQueue();
-    //initialize it with size 110000 as we know 86,000 values will be added, this will save the time of resizing
-    //(although this functionality is available)
+
     MovieNaviGator()
     { //constructor; reads through files and sets up movie unordered_map
         string line;
@@ -1030,7 +983,6 @@ public:
             //pop heading
             getline(inFile, line);
             getline(inFile, line);
-            //cout << "movies is open!" << endl;
             string id; //holds movie ID, which the map is organized by
 
             const clock_t begin_time_1 = clock(); //start clock
@@ -1076,8 +1028,7 @@ public:
 
                 movies.insert(id, currMovie);
             }
-
-            float resultTime = float(clock () - begin_time_1) /  CLOCKS_PER_SEC;
+            float resultTime = float(clock() - begin_time_1) / CLOCKS_PER_SEC;
 
             cout << "It took: " << resultTime << " seconds to parse through the first file, inserting data into the unordered map 85855 times." << endl;
         }
@@ -1125,10 +1076,12 @@ public:
                     }
                 }
             }
-            float resultTime = float(clock () - begin_time_1) /  CLOCKS_PER_SEC;
+
+            float resultTime = float(clock() - begin_time_1) / CLOCKS_PER_SEC;
 
             cout << "It took: " << resultTime << " seconds to parse through the second file, searching for data in the unordered map 85855 times." << endl;
             cout << endl;
+            cout << "Your top movies are:" << endl;
         }
         inFile.close();
     }
@@ -1293,14 +1246,15 @@ int main()
     cout << "----------------------------" << endl;
 
     int n = 1;
-    int duration;
-    int yearmin;
-    int yearmax;
-    double rating;
-    int number;
-    int age;
-    int gender;
-    int implementation;
+    int duration = 0;
+    int yearmin = 0;
+    int yearmax = 0;
+    double rating = 0;
+    int number = 0;
+    int age = 0;
+    int gender = 0;
+    int implementation = 0;
+    string proco = "";
 
     unordered_set<string> genres;
     vector<string> actors;
@@ -1309,9 +1263,7 @@ int main()
     unordered_set<string> directors;
     unordered_set<string> writers;
 
-    MovieNaviGator session;
-
-    while (n != 12)
+    while (n <= 11 && n >= 1)
     {
         string data;
         int dataNum;
@@ -1331,7 +1283,7 @@ int main()
         cout << "7. Enter preferred directors (e.g. Steven Spielberg)" << endl;
         cout << "8. Enter preferred writers (e.g. Quentin Tarantino)" << endl;
         cout << "9. Enter preferred production company (e.g. Warner Bros)" << endl;
-        cout << "10. Enter preferred minimum and maximum year" << endl;
+        cout << "10. Enter preferred minimum and maximum year (e.g. 2015)" << endl;
         cout << "11. Recommend movies" << endl;
         cout << "12. Exit" << endl;
         cout << "----------------------------" << endl;
@@ -1355,7 +1307,6 @@ int main()
                     language.erase(0, 1);
                 languages.insert(language);
             }
-            session.recommendations->setLanguages(languages);
         }
         else if (n == 2)
         {
@@ -1372,7 +1323,6 @@ int main()
                     genre.erase(0, 1);
                 genres.insert(genre);
             }
-            session.recommendations->setGenres(genres);
         }
         else if (n == 3)
         {
@@ -1381,7 +1331,6 @@ int main()
             cout << "Enter max duration in minutes (e.g. 120)" << endl;
             //SetConsoleTextAttribute(hConsole, 15);
             cin >> duration;
-            session.recommendations->setDuration(duration);
         }
         else if (n == 4)
         {
@@ -1398,7 +1347,6 @@ int main()
                     actor.erase(0, 1);
                 actors.push_back(actor);
             }
-            session.recommendations->setActors(actors);
         }
         else if (n == 5)
         {
@@ -1410,14 +1358,12 @@ int main()
             cout << "3. 31-45 years" << endl;
             cout << "4. 46+ years" << endl;
             cin >> age;
-            session.recommendations->setAge(age);
             //SetConsoleTextAttribute(hConsole, 9);
             cout << "What gender are you?" << endl;
             //SetConsoleTextAttribute(hConsole, 15);
             cout << "1. Female" << endl;
             cout << "2. Male" << endl;
             cin >> gender;
-            session.recommendations->setGender(gender);
         }
         else if (n == 6)
         {
@@ -1434,7 +1380,6 @@ int main()
                     country.erase(0, 1);
                 countries.insert(country);
             }
-            session.recommendations->setCountries(countries);
         }
         else if (n == 7)
         {
@@ -1451,7 +1396,6 @@ int main()
                     director.erase(0, 1);
                 directors.insert(director);
             }
-            session.recommendations->setDirectors(directors);
         }
         else if (n == 8)
         {
@@ -1468,7 +1412,6 @@ int main()
                     writer.erase(0, 1);
                 writers.insert(writer);
             }
-            session.recommendations->setWriters(writers);
         }
         else if (n == 9)
         {
@@ -1476,9 +1419,7 @@ int main()
             //SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred production company (e.g. Warner Bros)" << endl;
             //SetConsoleTextAttribute(hConsole, 15);
-            string proco;
             getline(cin, proco);
-            session.recommendations->setProductionCompany(proco);
         }
         else if (n == 10)
         {
@@ -1491,7 +1432,6 @@ int main()
             cout << "Enter preferred maximum year (e.g. 2012)" << endl;
             //SetConsoleTextAttribute(hConsole, 15);
             cin >> yearmax;
-            session.recommendations->setYearMaxMin(yearmax, yearmin);
         }
         else if (n == 11)
         {
@@ -1499,14 +1439,12 @@ int main()
             cout << "Enter number of recommendations" << endl;
             //SetConsoleTextAttribute(hConsole, 15);
             cin >> number;
-            session.recommendations->setNumber(number);
             //SetConsoleTextAttribute(hConsole, 9);
             cout << "Which implementation would you like?" << endl;
             //SetConsoleTextAttribute(hConsole, 15);
             cout << "1. Unordered Map" << endl;
             cout << "2. Priority Queue" << endl;
             cin >> implementation;
-            cout << endl;
             cout << "In case you're curious!" << endl;
             cout << "The MovieNaviGATOR recommends movies by calculating match scores for each movie based on your preferences." << endl;
             cout << "The match score is a number between 0 and 1 that reflects how good of a fit is the movie according to the " << endl;
@@ -1514,12 +1452,31 @@ int main()
             cout << "Note that because of the many factors considered, it's normal for your top matches to still be between 0.2 and" << endl;
             cout << "0.6. The following movies are printed in order of best to worst match score." << endl;
             cout << endl;
-            if (implementation == 1) {
-                cout << "Your top movies are: " << endl;
-                session.recommendations->buildMinMap(session.movies);
+            //cout << "Your top " << number << " movies are:" << endl;
+
+            PriorityQueue recommendations = PriorityQueue();
+            recommendations.setLanguages(languages);
+            recommendations.setGenres(genres);
+            recommendations.setDuration(duration);
+            recommendations.setActors(actors);
+            recommendations.setAge(age);
+            recommendations.setGender(gender);
+            recommendations.setCountries(countries);
+            recommendations.setDirectors(directors);
+            recommendations.setWriters(writers);
+            recommendations.setProductionCompany(proco);
+            recommendations.setYearMaxMin(yearmax, yearmin);
+            recommendations.setNumber(number);
+
+            if (implementation == 1)
+            {
+                MovieNaviGator *session = new MovieNaviGator();
+                recommendations.buildMinMap(session->movies);
             }
             else
-                session.recommendations->buildMinQueue();
+            {
+                recommendations.buildMinQueue();
+            }
             //SetConsoleTextAttribute(hConsole, 9);
             cout << "Would you like more information about any of these movies? (Y/N)" << endl;
             //SetConsoleTextAttribute(hConsole, 15);
@@ -1530,8 +1487,6 @@ int main()
                 //SetConsoleTextAttribute(hConsole, 9);
                 cout << "Which of the above movies would you like more information on? (1, 2, etc.)" << endl;
                 //SetConsoleTextAttribute(hConsole, 15);
-                /*cin >> dataNum;
-                session.recommendations->printMovieInfo2(dataNum);*/
                 vector<int> indices;
                 getline(cin, data);
                 istringstream ss(data);
@@ -1542,11 +1497,12 @@ int main()
                         writer.erase(0, 1);
                     indices.push_back(stoi(writer));
                 }
-                //session.recommendations->printMovieInfo3(indices);
+                recommendations.printMovieInfo3(indices);
             }
             break;
         }
-        else {
+        else
+        {
             cout << "Invalid input! Please enter a menu option between 1-12: " << endl;
         }
         cout << endl;
