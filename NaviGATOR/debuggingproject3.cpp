@@ -925,7 +925,7 @@ public:
             {
                 cout << "----------------------------" << endl;
                 cout << "Title: " << current->title << endl;
-                cout << "Original Title: " << current->original_title << endl;
+                //cout << "Original Title: " << current->original_title << endl;
                 cout << "Year: " << current->year << endl;
                 cout << "Date Published: " << current->date_published << endl;
                 cout << "Genres: ";
@@ -951,8 +951,13 @@ public:
 
     void printSet(unordered_set<string> temp, int length)
     {
-        for (string s : temp)
-            cout << s << ", ";
+        for (auto itr = temp.begin(); itr != temp.end();) {
+            cout << *itr;
+            if (++itr != temp.end()) {
+                cout << ", ";
+            }
+
+        }
         cout << endl;
     }
 
