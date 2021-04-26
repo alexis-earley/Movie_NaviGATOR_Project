@@ -56,7 +56,7 @@ public:
     {
         double votes = this->num_votes;
         double newyear = 0.0, newgenre = 0.0, newdura = 0.0, newcoun = 0.0, newdirec = 0.0, newwriters = 0.0, newprodu = 0.0, newactors = 0.0, newlang = 0.0, newrating = 0.0, newnumvotes = 0.0;
-        double percentage = (100.0 / 13.0) / 100.0; // finds percentage for all preferences
+        double percentage = (100.0 / 11.0) / 100.0; // finds percentage for all preferences
         unordered_set<string>::iterator itr;
         double countlang = 0.0, countgenre = 0.0, countcoun = 0.0, countdirec = 0.0, countwriters = 0.0, countactors = 0.0;
         for (itr = this->languages.begin(); itr != this->languages.end(); itr++)
@@ -105,14 +105,17 @@ public:
             newactors = ((mactors / countlang) / countactors) * percentage;
         if (mlang != 0.0)
             newlang = (mlang / countlang) * percentage;
-        if (mrating != 0.0)                                       // rating is given the most weight in the match score calculation so it is multiplied by 3
-            newrating = ((mrating / countlang) * percentage) * 1; // divided by number of languages so that the duration is not added by the number of languages (just one duration per movie)
-        if (votes >= 0.0 && votes < 10000.0)
-            newnumvotes += 0.1 * percentage;
-        if (votes >= 10000.0 && votes < 100000.0)
-            newnumvotes += 0.5 * percentage;
-        if (votes >= 100000.0)
-            newnumvotes += 1.0 * percentage;
+        if (mrating != 0.0)                                   // rating is given the most weight in the match score calculation so it is multiplied by 3
+            newrating = ((mrating / countlang) * percentage); // divided by number of languages so that the duration is not added by the number of languages (just one duration per movie)
+        if (mlang != 0.0)
+        {
+            if (votes >= 0.0 && votes < 10000.0)
+                newnumvotes += 0.1 * percentage;
+            if (votes >= 10000.0 && votes < 100000.0)
+                newnumvotes += 0.5 * percentage;
+            if (votes >= 100000.0)
+                newnumvotes += 1.0 * percentage;
+        }
 
         double totalscore = (newyear + newgenre + newdura + newcoun + newdirec + newwriters + newprodu + newactors + newlang + newrating + newnumvotes);
 
@@ -665,8 +668,7 @@ public:
     //Constructor initializes class variables (user preferences) to default values
     PriorityQueue()
     {
-        //number = 0;
-        number = 3;
+        number = 0;
         duration = 0;
         rating = 0.0;
         number = 0;
@@ -683,12 +685,7 @@ public:
     }
 
     //Redefine class variable per user input
-    void setDuration(int d)
-    {
-        duration = d;
-        //cout << "duration!" << endl;
-        //cout << this->duration << endl;
-    }
+    void setDuration(int d) { duration = d; }
 
     //Redefine class variable per user input
     void setYearMaxMin(int max, int min)
@@ -744,6 +741,7 @@ public:
 
     void show_max()
     {
+        cout << "Your top " << number << " movies are:" << endl;
         copy = max;
         int i = 1;         //create copy of max heap to use in printMovieInfo function (so that we are not trying to iterate through an empty vector)
         while (number > 0) //return the top 'number' movies in the max heap (number is user input)
@@ -797,8 +795,9 @@ public:
                 currMovie->id = data;
                 getline(ss, data, '\t'); //gets the title
                 currMovie->title = testQuotes(data);
-                getline(ss, data, '\t'); //gets the original title
-                currMovie->original_title = testQuotes(data);
+                getline(ss, data, '\t'); //gets the original title, which later was decided to be the actual title
+                currMovie->title = testQuotes(data);
+                currMovie->original_title = "";
                 getline(ss, data, '\t'); //gets the year
                 currMovie->year = intConv(data);
                 getline(ss, data, '\t'); //gets the date published
@@ -831,21 +830,21 @@ public:
             }
             float resultTime = float(clock() - begin_time_1) / CLOCKS_PER_SEC;
 
-            cout << "It took: " << resultTime << " seconds to parse through the first file, inserting data into the priority queue 85855 times." << endl;
+            cout << "It took: " << resultTime << " seconds to parse through the first file, inserting data into the priority queue " << max.size() << " times." << endl;
         }
         inFile.close();
-        /*inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
+        inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
 
         if (inFile.is_open())
         {
             //pop heading
-            //cout << "ratings is open!" << endl;
             getline(inFile, line);
-            //getline(inFile, line);
 
             string id;    //holds movie ID, which the map is organized by
             string data;  //holds various pieces of important data
             string trash; //holds lines that are ignored
+
+            const clock_t begin_time_1 = clock(); //start clock
 
             while (getline(inFile, line))
             {
@@ -878,15 +877,19 @@ public:
                     }
                 }
             }
+            float resultTime = float(clock() - begin_time_1) / CLOCKS_PER_SEC;
+
+            cout << "It took: " << resultTime << " seconds to parse through the second file, searching for data in the priority queue 85855 times." << endl;
+            cout << endl;
+            //cout << "Your top movies are:" << endl;
         }
-        inFile.close();*/
-        //buildMax();
+        inFile.close();
         show_max();
     }
 
     Movie *find(string id)
     {
-        for (Movie *current : min)
+        for (Movie *current : max)
         {
             if (current->id == id)
             {
@@ -896,7 +899,7 @@ public:
         return nullptr;
     }
 
-    void printMovieInfo3(vector<int> indices) //print multiple movies
+    void printMovieInfo(vector<int> indices) //print multiple movies
     {
         vector<Movie *> printing;
         while (copy.size() > 0)
@@ -913,7 +916,7 @@ public:
             {
                 cout << "----------------------------" << endl;
                 cout << "Title: " << current->title << endl;
-                cout << "Original Title: " << current->original_title << endl;
+                //cout << "Original Title: " << current->original_title << endl;
                 cout << "Year: " << current->year << endl;
                 cout << "Date Published: " << current->date_published << endl;
                 cout << "Genres: ";
@@ -939,8 +942,14 @@ public:
 
     void printSet(unordered_set<string> temp, int length)
     {
-        for (string s : temp)
-            cout << s << ", ";
+        for (auto itr = temp.begin(); itr != temp.end();)
+        {
+            cout << *itr;
+            if (++itr != temp.end())
+            {
+                cout << ", ";
+            }
+        }
         cout << endl;
     }
 
@@ -987,8 +996,9 @@ public:
                 id = data;
                 getline(ss, data, '\t'); //gets the title
                 currMovie->title = testQuotes(data);
-                getline(ss, data, '\t'); //gets the original title
-                currMovie->original_title = testQuotes(data);
+                getline(ss, data, '\t'); //gets the original title, which later was decided to be the actual title
+                currMovie->title = testQuotes(data);
+                currMovie->original_title = "";
                 getline(ss, data, '\t'); //gets the year
                 currMovie->year = intConv(data);
                 getline(ss, data, '\t'); //gets the date published
@@ -1023,16 +1033,17 @@ public:
             cout << "It took: " << resultTime << " seconds to parse through the first file, inserting data into the unordered map 85855 times." << endl;
         }
         inFile.close();
-        /*inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
+        inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
 
         if (inFile.is_open())
         {
             //pop heading
             getline(inFile, line);
-            //cout << "ratings is open!" << endl;
             string id;    //holds movie ID, which the map is organized by
             string data;  //holds various pieces of important data
             string trash; //holds lines that are ignored
+
+            const clock_t begin_time_1 = clock(); //start clock
 
             while (getline(inFile, line))
             {
@@ -1063,8 +1074,13 @@ public:
                     }
                 }
             }
+            float resultTime = float(clock() - begin_time_1) / CLOCKS_PER_SEC;
+
+            cout << "It took: " << resultTime << " seconds to parse through the second file, searching for data in the unordered map 85855 times." << endl;
+            cout << endl;
+            //cout << "Your top movies are:" << endl;
         }
-        inFile.close();*/
+        inFile.close();
     }
 
     ~MovieNaviGator()
@@ -1433,7 +1449,6 @@ int main()
             cout << "Note that because of the many factors considered, it's normal for your top matches to still be between 0.2 and" << endl;
             cout << "0.6. The following movies are printed in order of best to worst match score." << endl;
             cout << endl;
-            cout << "Your top " << number << " movies are:" << endl;
 
             PriorityQueue recommendations = PriorityQueue();
             recommendations.setLanguages(languages);
@@ -1478,7 +1493,7 @@ int main()
                         writer.erase(0, 1);
                     indices.push_back(stoi(writer));
                 }
-                recommendations.printMovieInfo3(indices);
+                recommendations.printMovieInfo(indices);
             }
             break;
         }
@@ -1488,6 +1503,7 @@ int main()
         }
         cout << endl;
     }
+    cout << endl;
     SetConsoleTextAttribute(hConsole, 9);
     cout << "Thank you for using MovieNaviGator!" << endl;
     SetConsoleTextAttribute(hConsole, 15);
