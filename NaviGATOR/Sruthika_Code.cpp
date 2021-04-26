@@ -43,6 +43,7 @@ public:
         production_company = "";
         description = "";
         num_votes = 0;
+        avg_vote = 0;
         for (int i = 0; i < 3; i++)
         { //fill 2D array with 0's
             for (int j = 0; j < 5; j++)
@@ -776,7 +777,7 @@ public:
         string line;
         vector<string> myString;
         ifstream inFile;
-        inFile.open("imdb_movies.tsv"); //first file; contains main movie data, but no detailed rating data, about 86k lines
+        inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_movies.tsv"); //first file; contains main movie data, but no detailed rating data, about 86k lines
         if (inFile.is_open())
         {
             //pop heading
@@ -831,10 +832,10 @@ public:
             }
             float resultTime = float(clock() - begin_time_1) / CLOCKS_PER_SEC;
 
-            cout << "It took: " << resultTime << " seconds to parse through the first file, inserting data into the priority queue " << max.size() << " times." << endl;
+            cout << "It took: " << resultTime << " seconds to parse through the first file, inserting data into the priority queue 85855 times." << endl;
         }
         inFile.close();
-        inFile.open("imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
+        inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
 
         if (inFile.is_open())
         {
@@ -962,9 +963,8 @@ public:
         cout << endl;
     }
 
-    void show_more()
+    void show_more(int n)
     {
-        int n = 5;
         int i = 1;    //create copy of max heap to use in printMovieInfo function (so that we are not trying to iterate through an empty vector)
         while (n > 0) //return the top 'number' movies in the max heap (number is user input)
         {
@@ -986,7 +986,7 @@ public:
         string line;
         vector<string> myString;
         ifstream inFile;
-        inFile.open("imdb_movies.tsv"); //first file; contains main movie data, but no detailed rating data, about 86k lines
+        inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_movies.tsv"); //first file; contains main movie data, but no detailed rating data, about 86k lines
         if (inFile.is_open())
         {
             //pop heading
@@ -1043,7 +1043,7 @@ public:
             cout << "It took: " << resultTime << " seconds to parse through the first file, inserting data into the unordered map 85855 times." << endl;
         }
         inFile.close();
-        inFile.open("imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
+        inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
 
         if (inFile.is_open())
         {
@@ -1099,7 +1099,7 @@ public:
         //can remain empty because all memory management is taken care of in the unordered map
     }
 
-    //prints out top contents of frequency map, from most to least frequent
+    /*//prints out top contents of frequency map, from most to least frequent
     void displayMap(unordered_map<string, int> myMap, int length)
     {
         unordered_map<string, int> mapPrint = myMap;
@@ -1138,11 +1138,11 @@ public:
     void displayLangs()
     { //displays top 10 languages
         displayMap(languageMap, 10);
-    }
+    }*/
 
 private:
-    unordered_map<string, int> genreMap;    //holds frequencies of genres
-    unordered_map<string, int> languageMap; //holds frequencies of languages
+    // unordered_map<string, int> genreMap;    //holds frequencies of genres
+    // unordered_map<string, int> languageMap; //holds frequencies of languages
 
     int intConv(string &input)
     { //constructor helper function; converts string to integer, if possible
@@ -1453,12 +1453,13 @@ int main()
             cout << "1. Unordered Map" << endl;
             cout << "2. Priority Queue" << endl;
             cin >> implementation;
+            cout << endl;
             cout << "In case you're curious!" << endl;
             cout << "The MovieNaviGATOR recommends movies by calculating match scores for each movie based on your preferences." << endl;
             cout << "The match score is a number between 0 and 1 that reflects how good of a fit is the movie according to the " << endl;
             cout << "preferences you specified. In this context, a score of 0 represents the worst match and 1 is the best match." << endl;
             cout << "Note that because of the many factors considered, it's normal for your top matches to still be between 0.2 and" << endl;
-            cout << "0.6. The following movies are printed in order of best to worst match score." << endl;
+            cout << "0.7. The following movies are printed in order of best to worst match score." << endl;
             cout << endl;
 
             PriorityQueue recommendations = PriorityQueue();
@@ -1483,9 +1484,18 @@ int main()
             else
             {
                 recommendations.buildMinQueue();
+                cout << "Would you like to see more recommendations? (Y/N)" << endl;
+                cin >> data;
+                if (data == "Y")
+                {
+                    cout << "How many more movies would you like to see?" << endl;
+                    cin >> data;
+                    recommendations.show_more(stoi(data));
+                }
             }
+            cin.ignore();
             //SetConsoleTextAttribute(hConsole, 9);
-            cout << "Would you like more information about any of these movies? (Y/N)" << endl;
+            cout << "Would you like more information about any of the top " << number << " movies? (Y/N)" << endl;
             //SetConsoleTextAttribute(hConsole, 15);
             cin >> data;
             if (data == "Y")
