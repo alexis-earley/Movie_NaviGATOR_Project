@@ -798,8 +798,9 @@ public:
                 currMovie->id = data;
                 getline(ss, data, '\t'); //gets the title
                 currMovie->title = testQuotes(data);
-                getline(ss, data, '\t'); //gets the original title
-                currMovie->original_title = testQuotes(data);
+                getline(ss, data, '\t'); //gets the original title, which later was decided to be the actual title
+                currMovie->title = testQuotes(data);
+                currMovie->original_title = "";
                 getline(ss, data, '\t'); //gets the year
                 currMovie->year = intConv(data);
                 getline(ss, data, '\t'); //gets the date published
@@ -895,7 +896,7 @@ public:
 
     Movie *find(string id)
     {
-        for (Movie *current : min)
+        for (Movie *current : max)
         {
             if (current->id == id)
             {
@@ -997,8 +998,9 @@ public:
                 id = data;
                 getline(ss, data, '\t'); //gets the title
                 currMovie->title = testQuotes(data);
-                getline(ss, data, '\t'); //gets the original title
-                currMovie->original_title = testQuotes(data);
+                getline(ss, data, '\t'); //gets the original title; which later was decided should be the actual title
+                currMovie->title = testQuotes(data);
+                currMovie->original_title = "";
                 getline(ss, data, '\t'); //gets the year
                 currMovie->year = intConv(data);
                 getline(ss, data, '\t'); //gets the date published
@@ -1508,6 +1510,7 @@ int main()
         cout << endl;
     }
     //SetConsoleTextAttribute(hConsole, 9);
+    cout << endl;
     cout << "Thank you for using MovieNaviGator!" << endl;
     //SetConsoleTextAttribute(hConsole, 15);
     return 0;
