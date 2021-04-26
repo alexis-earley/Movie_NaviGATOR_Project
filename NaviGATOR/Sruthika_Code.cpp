@@ -420,14 +420,6 @@ private:
         heapify_down_min(0);
     }
 
-    // Function to return the Movie with the lowest match score (present at the root or index = 0)
-    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
-    /*Movie *top_min()
-    {
-        // return the first element of the min vector
-        return min[0];
-    }*/
-
     void show_max()
     {
         //cout << "showing max heap!" << endl;
@@ -477,14 +469,6 @@ private:
         // call heapify-down on the root node
         heapify_down_copy(0);
     }
-
-    // Function to return the Movie with the highest match score (present at the root or index = 0)
-    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
-    /*Movie *top_max()
-    {
-        // return the first element of the max vector
-        return max[0];
-    }*/
 
     double totalscorecalc(Movie *movie, double myear, double mgenre, double mdura, double mcoun, double mdirec, double mwriters, double mprodu, double mactors, double mlang, double mrating)
     {
@@ -694,11 +678,6 @@ private:
         }
     }
 
-    /*void makeMatch(Movie *movie)
-    {
-        movie->match = ((double)rand() / (RAND_MAX));
-    }*/
-
     void buildMax()
     {
         //cout << "building max!" << endl;
@@ -709,16 +688,6 @@ private:
         }
         show_max();
     }
-
-    /*Movie *find(string title)
-    {
-        for (Movie *m : copy)
-        {
-            if (m->title == title)
-                return m;
-        }
-        return nullptr;
-    }*/
 
 public:
     //Constructor initializes class variables (user preferences) to default values
@@ -788,10 +757,10 @@ public:
             for (int j = 0; j < movies.table[i].size(); j++)
             {
                 movies.table[i][j].second->match = matchscore(movies.table[i][j].second, year_max, year_min, genres, duration, countries, languages, directors, writers, production_company, actors, age, gender); // calculate match score for each movie in unordered map
-                if (min.size() > 2 * number && movies.table[i][j].second->match < min[0]->match)
+                if (min.size() > number && movies.table[i][j].second->match < min[0]->match)
                     continue;
                 push_min(movies.table[i][j].second);
-                if (min.size() > 2 * number)
+                if (min.size() > number)
                     pop_min();
             }
         }
@@ -800,7 +769,6 @@ public:
 
     void buildMinQueue()
     {
-        cout << "building min queue!" << endl;
         string line;
         vector<string> myString;
         ifstream inFile;
@@ -808,9 +776,7 @@ public:
         if (inFile.is_open())
         {
             //pop heading
-            //cout << "movies is open!" << endl;
             getline(inFile, line);
-            //getline(inFile, line);
 
             string id; //holds movie ID, which the map is organized by
 
@@ -822,10 +788,6 @@ public:
                 string data;
                 getline(ss, data, '\t'); //gets the ID
                 currMovie->id = data;
-                //if (data == "tt0000009")
-                //    cout << "movie is here!" << endl;
-                //cout << data << endl;
-                //cout << currMovie->id << endl;
                 getline(ss, data, '\t'); //gets the title
                 currMovie->title = testQuotes(data);
                 getline(ss, data, '\t'); //gets the original title
@@ -862,7 +824,7 @@ public:
             }
         }
         inFile.close();
-        inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
+        /*inFile.open("C:\\Users\\Pandu\\source\\repos\\NaviGATOR\\NaviGATOR\\imdb_ratings.tsv"); //second file; contains detailed rating information for each movie (referenced by ID)
 
         if (inFile.is_open())
         {
@@ -907,7 +869,7 @@ public:
                 }
             }
         }
-        inFile.close();
+        inFile.close();*/
         buildMax();
     }
 
@@ -923,7 +885,7 @@ public:
         return nullptr;
     }
 
-    void printMovieInfo2(int index)
+    /*void printMovieInfo2(int index)
     {
         Movie *current;
         while (index > 0)
@@ -942,51 +904,16 @@ public:
             cout << "Year: " << current->year << endl;
             cout << "Date Published: " << current->date_published << endl;
             cout << "Genres: ";
-            printSet(current->genres);
+            printSet(current->genres, current->genres.size() - 1);
             cout << "Duration: " << current->duration << endl;
             cout << "Countries: ";
-            printSet(current->countries);
+            printSet(current->countries, current->countries.size() - 1);
             cout << "Languages: ";
-            printSet(current->languages);
+            printSet(current->languages, current->languages.size() - 1);
             cout << "Directors: ";
-            printSet(current->directors);
+            printSet(current->directors, current->directors.size() - 1);
             cout << "Writers: ";
-            printSet(current->writers);
-            cout << "Production Company: " << current->production_company << endl;
-            cout << "Actors: ";
-            for (string actor : current->actors)
-                cout << actor << ", ";
-            cout << endl;
-            cout << "Description: " << current->description << endl;
-            //cout << "Average Vote: " << current->avg_vote << endl;
-            //cout << "Votes: " << current->votes << endl;
-        }
-    }
-
-    /*void printMovieInfo(string title)
-    {
-        //cout << copy.size() << endl;
-        Movie *current = find(title);
-        if (!current)
-            cout << "Movie not found/recommended." << endl;
-        else
-        {
-            cout << "----------------------------" << endl;
-            cout << "Title: " << current->title << endl;
-            cout << "Original Title: " << current->original_title << endl;
-            cout << "Year: " << current->year << endl;
-            cout << "Date Published: " << current->date_published << endl;
-            cout << "Genres: ";
-            printSet(current->genres);
-            cout << "Duration: " << current->duration << endl;
-            cout << "Countries: ";
-            printSet(current->countries);
-            cout << "Languages: ";
-            printSet(current->languages);
-            cout << "Directors: ";
-            printSet(current->directors);
-            cout << "Writers: ";
-            printSet(current->writers);
+            printSet(current->writers, current->writers.size() - 1);
             cout << "Production Company: " << current->production_company << endl;
             cout << "Actors: ";
             for (string actor : current->actors)
@@ -998,18 +925,73 @@ public:
         }
     }*/
 
-    void printSet(unordered_set<string> temp)
+    void printMovieInfo3(vector<int> indices) //print multiple movies
     {
-        for (string t : temp)
-            cout << t << ", ";
-        cout << endl;
+        vector<Movie *> printing;
+        while (copy.size() > 0)
+        {
+            printing.push_back(copy[0]);
+            pop_copy();
+        }
+        for (int i = 0; i < indices.size(); i++)
+        {
+            Movie *current = printing[indices[i] - 1];
+            if (!current)
+                cout << "Movie not found/recommended." << endl;
+            else
+            {
+                cout << "----------------------------" << endl;
+                cout << "Title: " << current->title << endl;
+                cout << "Original Title: " << current->original_title << endl;
+                cout << "Year: " << current->year << endl;
+                cout << "Date Published: " << current->date_published << endl;
+                cout << "Genres: ";
+                printSet(current->genres, current->genres.size() - 1);
+                cout << "Duration: " << current->duration << endl;
+                cout << "Countries: ";
+                printSet(current->countries, current->countries.size() - 1);
+                cout << "Languages: ";
+                printSet(current->languages, current->languages.size() - 1);
+                cout << "Directors: ";
+                printSet(current->directors, current->directors.size() - 1);
+                cout << "Writers: ";
+                printSet(current->writers, current->writers.size() - 1);
+                cout << "Production Company: " << current->production_company << endl;
+                cout << "Actors: ";
+                for (string actor : current->actors)
+                    cout << actor << ", ";
+                cout << endl;
+                cout << "Description: " << current->description << endl;
+                //cout << "Average Vote: " << current->avg_vote << endl;
+                //cout << "Votes: " << current->votes << endl;
+            }
+        }
+    }
+
+    void printSet(unordered_set<string> temp, int length)
+    {
+        for (int i = 0; i < length; i++)
+        { //"length" number of contents should be printed
+            auto it = temp.begin();
+            cout << *it << endl;
+            it++;
+            //formatting
+            if (i < length - 1)
+            {
+                cout << ", ";
+            }
+            else
+            {
+                cout << endl;
+            }
+        }
     }
 
     void show_more()
     {
         //cout << "showing max heap!" << endl;
         int n = 5;
-        int i = 1;         //create copy of max heap to use in printMovieInfo function (so that we are not trying to iterate through an empty vector)
+        int i = 1;    //create copy of max heap to use in printMovieInfo function (so that we are not trying to iterate through an empty vector)
         while (n > 0) //return the top 'number' movies in the max heap (number is user input)
         {
             cout << i << ". " << max[0]->title << ": " << max[0]->match << endl;
@@ -1281,9 +1263,9 @@ int main()
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
     cout << "----------------------------" << endl;
-    //SetConsoleTextAttribute(hConsole, 9);
+    SetConsoleTextAttribute(hConsole, 9);
     cout << "*Welcome to MovieNaviGator!*" << endl;
-    //SetConsoleTextAttribute(hConsole, 15);
+    SetConsoleTextAttribute(hConsole, 15);
     cout << "----------------------------" << endl;
 
     int n = 1;
@@ -1309,15 +1291,15 @@ int main()
     {
         string data;
         int dataNum;
-        //SetConsoleTextAttribute(hConsole, 9);
+        SetConsoleTextAttribute(hConsole, 9);
         cout << "Menu:" << endl;
-        //SetConsoleTextAttribute(hConsole, 15);
+        SetConsoleTextAttribute(hConsole, 15);
         cout << "1. Enter preferred languages (e.g. English)" << endl;
         cout << "2. Enter preferred genres (e.g. Action)" << endl;
-        cout << "3. Enter preferred duration in minutes (e.g. 120)" << endl;
+        cout << "3. Enter maximum duration in minutes (e.g. 120)" << endl;
         cout << "4. Enter preferred actors/actresses (e.g. George Clooney)" << endl;
         cout << "5. Enter preferred ranking (e.g. 7.5)" << endl;
-        cout << "6. Enter preferred countries (e.g. India)" << endl;
+        cout << "6. Enter preferred countries (e.g. USA)" << endl;
         cout << "7. Enter preferred directors (e.g. Steven Spielberg)" << endl;
         cout << "8. Enter preferred writers (e.g. Quentin Tarantino)" << endl;
         cout << "9. Enter preferred production company (e.g. Warner Bros)" << endl;
@@ -1325,19 +1307,17 @@ int main()
         cout << "11. Recommend movies" << endl;
         cout << "12. Exit" << endl;
         cout << "----------------------------" << endl;
-        //SetConsoleTextAttribute(hConsole, 9);
+        SetConsoleTextAttribute(hConsole, 9);
         cout << "Please enter a menu option (e.g. 3)" << endl;
-        //SetConsoleTextAttribute(hConsole, 15);
+        SetConsoleTextAttribute(hConsole, 15);
         cout << "Your choice : ";
         cin >> n;
         if (n == 1)
         {
             cin.ignore();
-            //cout << "Top 10 Most Prevalent Languages in Database" << endl;
-            //session.displayLangs();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred language (e.g. English)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string language;
@@ -1352,11 +1332,9 @@ int main()
         else if (n == 2)
         {
             cin.ignore();
-            //cout << "All Genres in Database" << endl;
-            //session.displayGenres();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred genre (e.g. Action)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string genre;
@@ -1371,18 +1349,18 @@ int main()
         else if (n == 3)
         {
             cout << "Range of durations (in minutes) in database: 40 - 800" << endl;
-            //SetConsoleTextAttribute(hConsole, 9);
-            cout << "Enter preferred duration in minutes (e.g. 120)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 9);
+            cout << "Enter max duration in minutes (e.g. 120)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> duration;
             session.recommendations->setDuration(duration);
         }
         else if (n == 4)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred main actor/actress (e.g. George Clooney)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string actor;
@@ -1396,34 +1374,29 @@ int main()
         }
         else if (n == 5)
         {
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Which age group do you fall into?" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cout << "1. 0-18 years" << endl;
             cout << "2. 19-30 years" << endl;
             cout << "3. 31-45 years" << endl;
             cout << "4. 46+ years" << endl;
             cin >> age;
             session.recommendations->setAge(age);
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "What gender are you?" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cout << "1. Female" << endl;
             cout << "2. Male" << endl;
             cin >> gender;
             session.recommendations->setGender(gender);
-            //SetConsoleTextAttribute(hConsole, 9);
-            cout << "Enter preferred ranking (e.g. 7.5)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
-            cin >> rating;
-            session.recommendations->setRating(rating);
         }
         else if (n == 6)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
-            cout << "Enter preferred countries (e.g. India)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 9);
+            cout << "Enter preferred countries (e.g. USA)" << endl;
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string country;
@@ -1438,9 +1411,9 @@ int main()
         else if (n == 7)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred directors (e.g. Steven Spielberg)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string director;
@@ -1455,9 +1428,9 @@ int main()
         else if (n == 8)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred writers (e.g. Quentin Tarantino)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string writer;
@@ -1472,9 +1445,9 @@ int main()
         else if (n == 9)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred production company (e.g. Warner Bros)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             string proco;
             getline(cin, proco);
             session.recommendations->setProductionCompany(proco);
@@ -1482,26 +1455,26 @@ int main()
         else if (n == 10)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred minimum year (e.g. 2012)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> yearmin;
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred maximum year (e.g. 2012)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> yearmax;
             session.recommendations->setYearMaxMin(yearmax, yearmin);
         }
         else if (n == 11)
         {
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter number of recommendations" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> number;
             session.recommendations->setNumber(number);
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Which implementation would you like?" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cout << "1. Unordered Map" << endl;
             cout << "2. Priority Queue" << endl;
             cin >> implementation;
@@ -1510,31 +1483,36 @@ int main()
                 session.recommendations->buildMinMap(session.movies);
             else
                 session.recommendations->buildMinQueue();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Would you like more information about any of these movies? (Y/N)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> data;
             if (data == "Y")
             {
                 cin.ignore();
-                //SetConsoleTextAttribute(hConsole, 9);
-                //cout << "Which of the above movies would you like more information on?" << endl;
+                SetConsoleTextAttribute(hConsole, 9);
                 cout << "Which of the above movies would you like more information on? (1, 2, etc.)" << endl;
-                //SetConsoleTextAttribute(hConsole, 15);
-                //getline(cin, data);
-                cin >> dataNum;
-                //cout << data << endl;
-                //session.recommendations->printMovieInfo(data);
-                session.recommendations->printMovieInfo2(dataNum);
+                SetConsoleTextAttribute(hConsole, 15);
+                /*cin >> dataNum;
+                session.recommendations->printMovieInfo2(dataNum);*/
+                vector<int> indices;
+                getline(cin, data);
+                istringstream ss(data);
+                string writer;
+                while (getline(ss, writer, ','))
+                {
+                    if (writer[0] == ' ')
+                        writer.erase(0, 1);
+                    indices.push_back(stoi(writer));
+                }
+                //session.recommendations->printMovieInfo3(indices);
             }
-            //cout << "Would you like to see other recomendations?" << endl;
-            //session.recommendations->show_more();
             break;
         }
         cout << endl;
     }
-    //SetConsoleTextAttribute(hConsole, 9);
+    SetConsoleTextAttribute(hConsole, 9);
     cout << "Thank you for using MovieNaviGator!" << endl;
-    //SetConsoleTextAttribute(hConsole, 15);
+    SetConsoleTextAttribute(hConsole, 15);
     return 0;
 };
