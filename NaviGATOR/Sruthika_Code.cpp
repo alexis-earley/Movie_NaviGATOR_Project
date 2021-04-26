@@ -932,8 +932,13 @@ public:
                 printSet(current->writers, current->writers.size() - 1);
                 cout << "Production Company: " << current->production_company << endl;
                 cout << "Actors: ";
-                for (string actor : current->actors)
-                    cout << actor << ", ";
+                int actorsSize = current->actors.size();
+                if (actorsSize != 0) {
+                    cout << current->actors[0];
+                }
+                for (int i = 1; i < current->actors.size(); i++) {
+                    cout << ", " << current->actors[i];
+                }
                 cout << endl;
                 cout << "Description: " << current->description << endl;
             }
