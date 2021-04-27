@@ -1,7 +1,6 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_set>
-#include <unordered_map>
 #include <vector>
 #include <sstream>
 #include <string>
@@ -671,7 +670,6 @@ private:
 
     void buildMax()
     {
-        //cout << "building max!" << endl;
         while (min.size() > 0)
         {
             push_max(min[0]);
@@ -779,7 +777,6 @@ public:
 
     void buildMinMap(UnorderedMap &movies)
     {
-        //cout << this->duration << endl;
         for (int i = 0; i < movies.table.size(); i++)
         {
             for (int j = 0; j < movies.table[i].size(); j++)
@@ -877,9 +874,7 @@ public:
                 istringstream ss(line);
 
                 getline(ss, id, '\t'); //collect the ID for the current movie
-                //cout << id << endl;
                 Movie *currMovie = find(id); //find the movie with this ID in the map
-                //cout << currMovie->id << endl;
 
                 getline(ss, data, '\t'); //collect number of votes across all ages and genders
                 currMovie->num_votes = floatConv(data);
@@ -909,7 +904,6 @@ public:
 
             cout << "It took: " << resultTime << " seconds to parse through the second file, searching for data in the priority queue 85855 times." << endl;
             cout << endl;
-            //cout << "Your top movies are:" << endl;
         }
         inFile.close();
         show_max();
@@ -944,7 +938,6 @@ public:
             {
                 cout << "----------------------------" << endl;
                 cout << "Title: " << current->title << endl;
-                //cout << "Original Title: " << current->original_title << endl;
                 cout << "Year: " << current->year << endl;
                 cout << "Date Published: " << current->date_published << endl;
                 cout << "Genres: ";
@@ -1116,7 +1109,6 @@ public:
 
             cout << "It took: " << resultTime << " seconds to parse through the second file, searching for data in the unordered map 85855 times." << endl;
             cout << endl;
-            //cout << "Your top movies are:" << endl;
         }
         inFile.close();
     }
@@ -1126,50 +1118,7 @@ public:
         //can remain empty because all memory management is taken care of in the unordered map
     }
 
-    /*//prints out top contents of frequency map, from most to least frequent
-    void displayMap(unordered_map<string, int> myMap, int length)
-    {
-        unordered_map<string, int> mapPrint = myMap;
-        for (int i = 0; i < length; i++)
-        { //"length" number of contents should be printed
-            auto it = mapPrint.begin();
-            auto max = it;
-            while (it != mapPrint.end())
-            {
-                if ((it->second) > (max->second))
-                { //if it is the largest so far, replace the max
-                    max = it;
-                }
-                it++;
-            }
-            cout << max->first;
-            mapPrint.erase(max);
-
-            //formatting
-            if (i < length - 1)
-            {
-                cout << ", ";
-            }
-            else
-            {
-                cout << endl;
-            }
-        }
-    }
-
-    void displayGenres()
-    { //displays all genres
-        displayMap(genreMap, genreMap.size());
-    }
-
-    void displayLangs()
-    { //displays top 10 languages
-        displayMap(languageMap, 10);
-    }*/
-
 private:
-    // unordered_map<string, int> genreMap;    //holds frequencies of genres
-    // unordered_map<string, int> languageMap; //holds frequencies of languages
 
     int intConv(string &input)
     { //constructor helper function; converts string to integer, if possible
@@ -1250,23 +1199,6 @@ private:
             return input.substr(1, lastChar - 1);
         }
         return input;
-    }
-
-    void insertMap(unordered_set<string> &newSet, unordered_map<string, int> &mainMap)
-    { //constructor helper function; puts contents of set into map frequency table
-        auto it = newSet.begin();
-        while (it != newSet.end())
-        {
-            if (mainMap.find(*it) != mainMap.end())
-            {
-                mainMap[*it] = mainMap[*it] + 1;
-            }
-            else
-            {
-                mainMap[*it] = 1;
-            }
-            it++;
-        }
     }
 };
 
