@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 #include <iomanip>
-//#include <windows.h>
+#include <windows.h>
 using namespace std;
 
 class Movie
@@ -402,11 +402,11 @@ private:
     // vectors to store heap elements
     vector<Movie *> min;
     vector<Movie *> max;
+    vector<Movie *> maxCopy;
     vector<Movie *> copy;
     int number; //user input for number of recomendations specifies size of min and max heap
     //begin other user inputs for match preferences
     int duration;
-    double rating;
     int age;
     int gender;
     int year_max;
@@ -566,6 +566,21 @@ private:
         }
     }
 
+    // Recursively sifts up through the max heap to ensure that the each node's children are smaller than the node, and if not, swapping them
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void heapify_up_maxCopy(int i)
+    {
+        // check if the parent is smaller than the child
+        if (i && maxCopy[(i - 1) / 2]->match < maxCopy[i]->match)
+        {
+            // swap the child and the parent
+            swap(maxCopy[i], maxCopy[(i - 1) / 2]);
+
+            // call heapify-up on the parent
+            heapify_up_maxCopy((i - 1) / 2);
+        }
+    }
+
     // Recursively sifts down through the min heap to ensure that the each node's children are larger than the node, and if not, swapping them
     //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
     void heapify_down_min(int i)
@@ -671,7 +686,6 @@ public:
     {
         number = 0;
         duration = 0;
-        rating = 0.0;
         number = 0;
         age = 0;
         gender = 0;
@@ -697,9 +711,6 @@ public:
 
     //Redefine class variable per user input
     void setProductionCompany(string p) { production_company = p; }
-
-    //Redefine class variable per user input
-    void setRating(double r) { rating = r; }
 
     //Redefine class variable per user input
     void setNumber(int n) { number = n; }
@@ -738,6 +749,18 @@ public:
         // get element index and call heapify-up procedure
         int index = max.size() - 1;
         heapify_up_max(index);
+    }
+
+    // insert Movie into the max heap
+    //https://www.techiedelight.com/min-heap-max-heap-implementation-c/
+    void push_maxCopy(Movie *key)
+    {
+        // insert new Movie at the end of the vector
+        maxCopy.push_back(key);
+
+        // get element index and call heapify-up procedure
+        int index = maxCopy.size() - 1;
+        heapify_up_maxCopy(index);
     }
 
     void show_max()
@@ -782,7 +805,7 @@ public:
         {
             //pop heading
             getline(inFile, line);
-            getline(inFile, line);
+            //getline(inFile, line);
 
             string id;                            //holds movie ID, which the map is organized by
             const clock_t begin_time_1 = clock(); //start clock
@@ -828,7 +851,7 @@ public:
                 currMovie->description = testQuotes(data);
 
                 currMovie->match = currMovie->matchscore(this->year_max, this->year_min, this->genres, this->duration, this->countries, this->languages, this->directors, this->writers, this->production_company, this->actors, this->age, this->gender); // calculate match score for each movie in unordered map
-                push_max(currMovie);
+                push_maxCopy(currMovie);
             }
             float resultTime = float(clock() - begin_time_1) / CLOCKS_PER_SEC;
 
@@ -841,7 +864,7 @@ public:
         {
             //pop heading
             getline(inFile, line);
-            getline(inFile, line);
+            //getline(inFile, line);
 
             string id;    //holds movie ID, which the map is organized by
             string data;  //holds various pieces of important data
@@ -879,6 +902,8 @@ public:
                         currMovie->avg_votes[i][j] = floatConv(data);
                     }
                 }
+                currMovie->match = currMovie->matchscore(this->year_max, this->year_min, this->genres, this->duration, this->countries, this->languages, this->directors, this->writers, this->production_company, this->actors, this->age, this->gender); // calculate match score for each movie in unordered map
+                push_max(currMovie);
             }
             float resultTime = float(clock() - begin_time_1) / CLOCKS_PER_SEC;
 
@@ -892,7 +917,7 @@ public:
 
     Movie *find(string id)
     {
-        for (Movie *current : max)
+        for (Movie *current : maxCopy)
         {
             if (current->id == id)
             {
@@ -936,10 +961,12 @@ public:
                 cout << "Production Company: " << current->production_company << endl;
                 cout << "Actors: ";
                 int actorsSize = current->actors.size();
-                if (actorsSize != 0) {
+                if (actorsSize != 0)
+                {
                     cout << current->actors[0];
                 }
-                for (int i = 1; i < current->actors.size(); i++) {
+                for (int i = 1; i < current->actors.size(); i++)
+                {
                     cout << ", " << current->actors[i];
                 }
                 cout << endl;
@@ -1245,19 +1272,18 @@ private:
 
 int main()
 {
-    //HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
     cout << "----------------------------" << endl;
-    //SetConsoleTextAttribute(hConsole, 9);
+    SetConsoleTextAttribute(hConsole, 9);
     cout << "*Welcome to MovieNaviGator!*" << endl;
-    //SetConsoleTextAttribute(hConsole, 15);
+    SetConsoleTextAttribute(hConsole, 15);
     cout << "----------------------------" << endl;
 
     int n = 1;
     int duration = 0;
     int yearmin = 0;
     int yearmax = 0;
-    double rating = 0;
     int number = 0;
     int age = 0;
     int gender = 0;
@@ -1276,12 +1302,12 @@ int main()
         string data;
         int dataNum;
         cout << endl;
-        //SetConsoleTextAttribute(hConsole, 15);
+        SetConsoleTextAttribute(hConsole, 15);
         cout << "Note that input is case-sensitive and multiple inputs should be separated by commas" << endl;
         cout << endl;
-        //SetConsoleTextAttribute(hConsole, 9);
+        SetConsoleTextAttribute(hConsole, 9);
         cout << "Menu:" << endl;
-        //SetConsoleTextAttribute(hConsole, 15);
+        SetConsoleTextAttribute(hConsole, 15);
         cout << "1. Enter preferred languages (e.g. English)" << endl;
         cout << "2. Enter preferred genres (e.g. Action)" << endl;
         cout << "3. Enter maximum duration in minutes (e.g. 120)" << endl;
@@ -1295,17 +1321,17 @@ int main()
         cout << "11. Recommend movies" << endl;
         cout << "12. Exit" << endl;
         cout << "----------------------------" << endl;
-        //SetConsoleTextAttribute(hConsole, 9);
+        SetConsoleTextAttribute(hConsole, 9);
         cout << "Please enter a menu option (e.g. 3)" << endl;
-        //SetConsoleTextAttribute(hConsole, 15);
+        SetConsoleTextAttribute(hConsole, 15);
         cout << "Your choice : ";
         cin >> n;
         if (n == 1)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred language (e.g. English)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string language;
@@ -1319,9 +1345,9 @@ int main()
         else if (n == 2)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred genre (e.g. Action)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string genre;
@@ -1335,17 +1361,17 @@ int main()
         else if (n == 3)
         {
             cout << "Range of durations (in minutes) in database: 40 - 800" << endl;
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter max duration in minutes (e.g. 120)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> duration;
         }
         else if (n == 4)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred main actor/actress (e.g. George Clooney)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string actor;
@@ -1358,17 +1384,17 @@ int main()
         }
         else if (n == 5)
         {
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Which age group do you fall into?" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cout << "1. 0-18 years" << endl;
             cout << "2. 19-30 years" << endl;
             cout << "3. 31-45 years" << endl;
             cout << "4. 46+ years" << endl;
             cin >> age;
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "What gender are you?" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cout << "1. Female" << endl;
             cout << "2. Male" << endl;
             cin >> gender;
@@ -1376,9 +1402,9 @@ int main()
         else if (n == 6)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred countries (e.g. USA)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string country;
@@ -1392,9 +1418,9 @@ int main()
         else if (n == 7)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred directors (e.g. Steven Spielberg)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string director;
@@ -1408,9 +1434,9 @@ int main()
         else if (n == 8)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred writers (e.g. Quentin Tarantino)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, data);
             istringstream ss(data);
             string writer;
@@ -1424,32 +1450,32 @@ int main()
         else if (n == 9)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred production company (e.g. Warner Bros)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             getline(cin, proco);
         }
         else if (n == 10)
         {
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred minimum year (e.g. 2012)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> yearmin;
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter preferred maximum year (e.g. 2012)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> yearmax;
         }
         else if (n == 11)
         {
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Enter number of recommendations" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> number;
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Which implementation would you like?" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cout << "1. Unordered Map" << endl;
             cout << "2. Priority Queue" << endl;
             cin >> implementation;
@@ -1484,26 +1510,34 @@ int main()
             else
             {
                 recommendations.buildMinQueue();
-                cout << "Would you like to see more recommendations? (Y/N)" << endl;
-                cin >> data;
-                if (data == "Y")
+                bool more = true;
+                while (more)
                 {
-                    cout << "How many more movies would you like to see?" << endl;
+                    cout << "Would you like to see more recommendations? (Y/N)" << endl;
                     cin >> data;
-                    recommendations.show_more(stoi(data));
+                    if (data == "Y")
+                    {
+                        cout << "How many more movies would you like to see?" << endl;
+                        cin >> data;
+                        recommendations.show_more(stoi(data));
+                    }
+                    else
+                    {
+                        more = false;
+                    }
                 }
             }
             cin.ignore();
-            //SetConsoleTextAttribute(hConsole, 9);
+            SetConsoleTextAttribute(hConsole, 9);
             cout << "Would you like more information about any of the top " << number << " movies? (Y/N)" << endl;
-            //SetConsoleTextAttribute(hConsole, 15);
+            SetConsoleTextAttribute(hConsole, 15);
             cin >> data;
             if (data == "Y")
             {
                 cin.ignore();
-                //SetConsoleTextAttribute(hConsole, 9);
+                SetConsoleTextAttribute(hConsole, 9);
                 cout << "Which of the above movies would you like more information on? (1, 2, etc.)" << endl;
-                //SetConsoleTextAttribute(hConsole, 15);
+                SetConsoleTextAttribute(hConsole, 15);
                 vector<int> indices;
                 getline(cin, data);
                 istringstream ss(data);
@@ -1525,8 +1559,8 @@ int main()
         cout << endl;
     }
     cout << endl;
-    //SetConsoleTextAttribute(hConsole, 9);
+    SetConsoleTextAttribute(hConsole, 9);
     cout << "Thank you for using MovieNaviGator!" << endl;
-    //SetConsoleTextAttribute(hConsole, 15);
+    SetConsoleTextAttribute(hConsole, 15);
     return 0;
 };
