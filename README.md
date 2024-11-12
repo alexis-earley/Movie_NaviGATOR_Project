@@ -10,4 +10,4 @@ In this project, we had to implement the main data structures by hand. My primar
 
 The time complexity aspect was very important. Ultimately, I was able to get my portion of the code to O(1) time complexity, and it generated the top 5 recommendations after evaluating the data in all 172,000 rows in less than 26 seconds.
 
-A video further explaining the project is located at this link: https://youtu.be/2gKYun6vu5A, and the project instructions and report are included in this repository.
+A video further explaining the project is located at this link: https://youtu.be/2gKYun6vu5A. My project instructions, code, IMDB data, and report are included in this repository.
